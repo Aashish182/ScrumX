@@ -1,0 +1,7 @@
+const ROLE = {
+    ADMIN : "ADMIN",
+    GENERAL : "GENERAL",
+    DEVELOPER: "DEVELOPER",
+    CLIENT: "CLIENT",
+    SCRUM_MASTER: "SCRUM_MASTER"
+}
