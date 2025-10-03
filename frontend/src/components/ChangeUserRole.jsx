@@ -142,7 +142,6 @@ const ChangeUserRole = ({
                         <option value="ADMIN">ADMIN</option>
                         <option value="GENERAL">GENERAL</option>
                         <option value="DEVELOPER">DEVELOPER</option>
-                        <option value="CLIENT">CLIENT</option>
                         <option value="SCRUM_MASTER">SCRUM_MASTER</option>
                     </select>
                 </div>

@@ -11,6 +11,12 @@ const allUsers = require('../controller/allUsers');
 const updateUser = require('../controller/updateUser');
 const roleLogin = require('../controller/roleLogin');
 const aboutusDetails = require('../controller/aboutusDetails');
+const createBlog = require('../controller/createBlog');
+const blogDetailsController = require('../controller/blogDetails');
+const blogUser = require('../controller/blogUser');
+const AllAboutUs = require('../controller/allQueries');
+const createTeam = require('../controller/createTeam');
+const allTeams = require('../controller/teamDetails');
 
 
 // Routes
@@ -22,5 +28,11 @@ router.get("/AllUser", allUsers);
 router.post("/UpdateUser", updateUser);
 router.post("/rolelogin", roleLogin);
 router.post("/aboutusdetail", aboutusDetails);
+router.post("/create-blog", createBlog);
+router.get("/blogdetails", blogDetailsController);
+router.get("/blog-user", blogUser);
+router.get("/AllAboutus", AllAboutUs);
+router.post("/CreateTeam", createTeam);
+router.get("/AllTeams", allTeams);
 
 module.exports = router;

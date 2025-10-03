@@ -16,9 +16,18 @@ import AdminPanel from './pages/AdminPanel';
 import RoleLogin from './pages/RoleLogin';
 import ScrumHome from './pages/ScrumHome';
 import DeveloperHome from './pages/DeveloperHome';
-import ClientHome from './pages/ClientHome';
 import Contact from './pages/Contact';
 import AboutUs from './pages/Aboutus';
+import Features from './pages/Features';
+import Blog from './pages/Blog';
+import Retrospectives from './pages/Retrospectives';
+import TeamChat from './pages/TeamChat';
+import AccountPreferences from './pages/Preferences';
+import Responses from './pages/Responses';
+import Performance from './pages/Performance';
+import AllQueries from './components/AllQueries';
+import AllTeams from './components/AllTeams';
+import CreateTeam from './pages/CreateTeam';
 
 function App() {
   const dispatch = useDispatch();
@@ -93,16 +102,25 @@ function App() {
       ),
     },
     {
-      path: '/Developer/Login',
+      path: '/Features',
       element: (
         <>
           <Navbar />
-          <RoleLogin />
+          <Features />
         </>
       ),
     },
     {
-      path: '/Client/Login',
+      path: '/Blog',
+      element: (
+        <>
+          <Navbar />
+          <Blog />
+        </>
+      ),
+    },
+    {
+      path: '/Developer/Login',
       element: (
         <>
           <Navbar />
@@ -120,14 +138,6 @@ function App() {
       ),
     },
     {
-      path: '/Client/Dashboard',
-      element: (
-        <>
-          <ClientHome />
-        </>
-      ),
-    },
-    {
       path: '/Developer/Dashboard',
       element: (
         <>
@@ -140,6 +150,46 @@ function App() {
       element: (
         <>
           <ScrumHome />
+        </>
+      ),
+    },
+    {
+      path: '/TeamChat',
+      element: (
+        <>
+          <TeamChat />
+        </>
+      ),
+    },
+    {
+      path: '/Retrospectives',
+      element: (
+        <>  
+          <Retrospectives />
+        </>
+      ),
+    },
+    {
+      path: '/Performance',
+      element: (
+        <>  
+          <Performance />
+        </>
+      ),
+    },
+    {
+      path: '/Preferences',
+      element: (
+        <>  
+          <AccountPreferences />
+        </>
+      ),
+    },
+    {
+      path: '/Responses',
+      element: (
+        <>  
+          <Responses />
         </>
       ),
     },
@@ -161,18 +211,18 @@ function App() {
           path:"AllUsers",
           element:<AllUsers/>
         },
-        // {
-        //   path:"AllBlogs",
-        //   element:<AllBlogs/>
-        // },
-        // {
-        //   path:"AllQueries",
-        //   element:<AllQueries/>
-        // },
-        // {
-        //   path:"AllJobTrends",
-        //   element:<AllJobTrends/>
-        // },
+        {
+          path:"AllTeams",
+          element:<AllTeams/>
+        },
+        {
+          path:"AllQueries",
+          element:<AllQueries/>
+        },
+        {
+          path:"AllTeams/CreateTeam",
+          element:<CreateTeam/>
+        },
         // {
         //   path:"AllFeedbacks",
         //   element:<AllFeedbacks/>

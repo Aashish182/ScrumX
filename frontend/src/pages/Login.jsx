@@ -1,142 +1,152 @@
 
 
 import React, { useState } from 'react';
-import loginimg from "../asset/login.png";
+import loginimg from '../asset/login3.png'
 import { FaUser, FaLock, FaEye, FaEyeSlash } from "react-icons/fa";
 import { NavLink, useNavigate } from 'react-router-dom';
 import { toast } from "react-toastify";
 import SummaryApi from "../common";
 import { useDispatch } from 'react-redux';
-import { fetchUserDetails } from '../store/userSlice';   // ✅ import from Redux
+import { fetchUserDetails } from '../store/userSlice';
 import axios from 'axios';
 
 const Login = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [data, setData] = useState({ email: '', password: '' });
   const [errors, setErrors] = useState({});
-
   const navigate = useNavigate();
-  const dispatch = useDispatch();  // ✅ only Redux
+  const dispatch = useDispatch();
 
-  const togglePasswordVisibility = () => {
-    setShowPassword(!showPassword);
-  };
+  const togglePasswordVisibility = () => setShowPassword(!showPassword);
 
   const validateInputs = () => {
     const errors = {};
     const emailPattern = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
-
     if (!emailPattern.test(data.email)) {
       toast.error("Please enter a valid email address.");
       errors.email = "Please enter a valid email address.";
     }
-
     setErrors(errors);
     return Object.keys(errors).length === 0;
   };
 
   const handleChange = (e) => {
-    const { name , value } = e.target;
-    setData((prev)=>({...prev, [name]: value}));
+    const { name, value } = e.target;
+    setData((prev) => ({ ...prev, [name]: value }));
   };
 
   const handleSubmit = async (e) => {
-  e.preventDefault();
-  if (!validateInputs()) return;
+    e.preventDefault();
+    if (!validateInputs()) return;
 
-  try {
-    const response = await axios({
-      url: SummaryApi.login.url,
-      method: SummaryApi.login.method,
-      data,                           
-      withCredentials: true,          
-      headers: {
-        "Content-Type": "application/json",
-      },
-    });
+    try {
+      const response = await axios({
+        url: SummaryApi.login.url,
+        method: SummaryApi.login.method,
+        data,
+        withCredentials: true,
+        headers: { "Content-Type": "application/json" },
+      });
 
-    const dataApi = response.data;   
+      const dataApi = response.data;
 
-    if (dataApi.success) {
-      toast.success(dataApi.message);
-      navigate('/Home');
-
-      dispatch(fetchUserDetails());
-    } else if (dataApi.error) {
-      toast.error(dataApi.message);
+      if (dataApi.success) {
+        toast.success(dataApi.message);
+        navigate('/Home');
+        dispatch(fetchUserDetails());
+      } else if (dataApi.error) {
+        toast.error(dataApi.message);
+      }
+    } catch (err) {
+      console.error("Login error:", err);
+      toast.error("Something went wrong. Try again.");
     }
-  } catch (err) {
-    console.error("Login error:", err);
-    toast.error("Something went wrong. Try again.");
-  }
-};
+  };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-white via-[#f3e8ff] to-[#e9d5ff] flex items-center justify-center relative overflow-hidden">
-      <div className="absolute top-10 left-10 w-40 h-40 bg-white rounded-lg shadow-lg opacity-70 transform rotate-12"></div>
-      <div className="absolute bottom-20 left-10 w-60 h-60 bg-[#e9d5ff] rounded-lg shadow-lg opacity-70 transform -rotate-12"></div>
-      <div className="absolute bottom-20 right-16 w-60 h-60 bg-[#f3e8ff] rounded-lg shadow-lg opacity-80 transform -rotate-6"></div>
-      <div className="absolute top-32 right-32 w-52 h-52 bg-[#e9d5ff] rounded-lg shadow-lg opacity-80 transform rotate-3"></div>
-
-      <div className="w-[90%] top-12 md:w-[70%] lg:w-[60%] bg-[#C7D2FE] p-10 rounded-lg shadow-2xl relative z-10">
+    <div className="min-h-screen bg-black flex items-center justify-center text-white">
+      <div className="w-[90%] md:w-[75%] lg:w-[65%] flex bg-[#111] rounded-2xl shadow-2xl overflow-hidden">
         
-        <h1 className="text-left text-gray-700 text-3xl font-bold mb-8">Welcome Back</h1>
-        
-        <div className="flex flex-col md:flex-row items-center gap-12">
-          
-          <div className="md:w-1/2">
-            <img className="w-full rounded-lg" src={loginimg} alt="login-img" />
-          </div>
-          
-          <div className="md:w-1/2 bg-[#C4B5FD] p-10 rounded-lg">
-            <h2 className="text-start text-gray-500 text-xl mb-6">Please Login to Continue..</h2>
-            <form className="space-y-6" onSubmit={handleSubmit}>
-              
-              <div className="flex items-center border rounded-md p-3 bg-[#faf5ff]">
-                <FaUser className="text-gray-500 text-xl mr-3" />
-                <input
-                  type="text"
-                  name='email' value={data.email} onChange={handleChange}
-                  className="w-full focus:outline-none bg-[#faf5ff]"
-                  placeholder="Enter your email"
-                  required
-                />
-              </div>
+        {/* Left Section */}
+        <div className="hidden md:flex w-1/2 flex-col items-center justify-center p-10 bg-[#1a1a1a]">
+          <h1 className="text-2xl md:text-3xl font-bold mb-4 text-center">
+            Ready to streamline your standups?
+          </h1>
+          <p className="text-gray-400 text-center mb-6">
+            Discover the best ways to collaborate!
+          </p>
+          <img
+            src={loginimg}  // 👉 replace with your image
+            alt="login-illustration"
+            className="w-72 h-auto"
+          />
+          <p className="text-gray-500 text-sm mt-6">
+            Manage your team’s daily check-ins!
+          </p>
+        </div>
 
-              <div className="flex items-center border rounded-md p-3 bg-[#faf5ff]">
-                <FaLock className="text-gray-500 text-xl mr-3" />
-                <input
-                  type={showPassword ? "text" : "password"}
-                  name='password' value={data.password} onChange={handleChange}
-                  className="w-full focus:outline-none bg-[#faf5ff]"
-                  placeholder="Enter your password"
-                  required
-                />
-                <button
-                  type="button"
-                  onClick={togglePasswordVisibility}
-                  className="text-gray-500 text-xl ml-3 focus:outline-none"
-                >
-                  {showPassword ? <FaEyeSlash /> : <FaEye />}
-                </button>
-              </div>
-
-              <button
-                type="submit"
-                className="w-full bg-purple-600 text-white py-3 rounded-md font-semibold hover:bg-purple-700 transition-all"
-              >
-                Login
-              </button>
-            </form>
-            <div className="text-right">
-              <NavLink to="/forgotpassword" className="text-sm text-purple-600 hover:underline font-medium">
-                Forgot Password ?
-              </NavLink>
+        {/* Right Section */}
+        <div className="w-full md:w-1/2 p-10 flex flex-col justify-center bg-[#0d0d0d]">
+          <h2 className="text-2xl font-bold mb-6">Welcome Back</h2>
+          <form onSubmit={handleSubmit} className="space-y-6">
+            
+            <div className="flex items-center border border-gray-700 rounded-full px-4 py-3 bg-black">
+              <FaUser className="text-gray-400 mr-3" />
+              <input
+                type="text"
+                name="email"
+                value={data.email}
+                onChange={handleChange}
+                placeholder="Your email"
+                className="w-full bg-transparent outline-none text-white"
+                required
+              />
             </div>
-            <p className="text-center text-gray-500 mt-6">
-              Don't have an account? <NavLink to="/register" className="text-purple-600 font-medium hover:underline">Register here</NavLink>
-            </p>
+
+            <div className="flex items-center border border-gray-700 rounded-full px-4 py-3 bg-black">
+              <FaLock className="text-gray-400 mr-3" />
+              <input
+                type={showPassword ? "text" : "password"}
+                name="password"
+                value={data.password}
+                onChange={handleChange}
+                placeholder="Password"
+                className="w-full bg-transparent outline-none text-white"
+                required
+              />
+              <button
+                type="button"
+                onClick={togglePasswordVisibility}
+                className="text-gray-400 ml-2"
+              >
+                {showPassword ? <FaEyeSlash /> : <FaEye />}
+              </button>
+            </div>
+
+            <button
+              type="submit"
+              className="w-full bg-green-600 text-white py-3 rounded-full font-semibold hover:bg-green-700 transition"
+            >
+              Sign In
+            </button>
+          </form>
+
+          <p className="text-center text-gray-400 my-4">or sign in with</p>
+          <div className="flex gap-4 justify-center">
+            <button className="w-32 py-2 bg-white text-black rounded-full font-medium hover:bg-gray-200">
+              Google
+            </button>
+            <button className="w-32 py-2 bg-white text-black rounded-full font-medium hover:bg-gray-200">
+              Facebook
+            </button>
           </div>
+
+          <p className="text-center text-gray-400 mt-6">
+            Don’t have an account?{" "}
+            <NavLink to="/register" className="text-green-500 hover:underline">
+              Sign up
+            </NavLink>
+          </p>
         </div>
       </div>
     </div>
