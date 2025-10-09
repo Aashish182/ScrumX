@@ -58,6 +58,14 @@ const SummaryApi = {
     allTeams : {
         url: `${backendDomain}/api/AllTeams`,
         method : "get"
+    },
+    updateTeam : {
+        url: `${backendDomain}/api/UpdateTeam`,
+        method : "post"
+    },
+    teamdetail : {
+        url: `${backendDomain}/api/TeamDetail`,
+        method : "post"
     }
 }
 

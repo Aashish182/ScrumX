@@ -1,130 +1,187 @@
-
-
-import React, { useState, useEffect } from "react";
-import { Search, Bell, Calendar, CheckCircle } from "lucide-react";
+import React, { useState, useEffect, useRef } from "react";
 import SideBar from "../components/Sidebar";
 import { useSelector } from "react-redux";
-import axios from "axios";
+import { UserCheck, CheckSquare, Clock, AlertTriangle } from "lucide-react";
 
-const DeveloperHome = ({ userId, teamId }) => {
+const DeveloperHome = () => {
   const isOpen = useSelector((state) => state.sidebar.isOpen);
-  const [questions, setQuestions] = useState([]);
-  const [answers, setAnswers] = useState({});
-  const [tabView, setTabView] = useState(false);
-  const [teamData, setTeamData] = useState({});
-  const [projectProgress, setProjectProgress] = useState(0);
+  const user = useSelector((state) => state.user.user);
 
-  // Fetch questions and team/project data
+  const [standupStarted, setStandupStarted] = useState(false);
+  const [messages, setMessages] = useState([]);
+  const [input, setInput] = useState("");
+  const [questionIndex, setQuestionIndex] = useState(0);
+  const [botTyping, setBotTyping] = useState(false);
+
+  const chatEndRef = useRef(null);
+
+  const botQuestions = [
+    "Hi! What did you work on yesterday? 💻",
+    "Any blockers or challenges you faced? ⚠️",
+    "What are your tasks for today? 📅",
+  ];
+
   useEffect(() => {
-    // Check today's questions
-    axios.get(`/api/questions/today/${userId}`).then(res => {
-      if (res.data.length === 0) setTabView(true); // Already answered
-      else setQuestions(res.data);
-    });
+    if (chatEndRef.current) {
+      chatEndRef.current.scrollIntoView({ behavior: "smooth" });
+    }
+  }, [messages, botTyping]);
 
-    // Fetch team and project progress
-    axios.get(`/api/team/${teamId}`).then(res => {
-      setTeamData(res.data);
-      setProjectProgress(res.data.project.progress || 0);
-    });
-  }, [userId, teamId]);
+  const handleStartStandup = () => {
+    setStandupStarted(true);
+    setBotTyping(true);
+    setTimeout(() => {
+      setMessages([{ sender: "bot", text: botQuestions[0], time: new Date() }]);
+      setBotTyping(false);
+    }, 1000);
+  };
 
-  const submitAnswers = () => {
-    axios.post('/api/questions/answer', { userId, answers })
-      .then(() => setTabView(true)); // Move to tab view after submission
+  const handleSendMessage = () => {
+    if (!input.trim()) return;
+
+    const userMessage = { sender: "user", text: input, time: new Date() };
+    setMessages((prev) => [...prev, userMessage]);
+    setInput("");
+
+    if (questionIndex + 1 < botQuestions.length) {
+      setBotTyping(true);
+      setTimeout(() => {
+        setQuestionIndex((prev) => prev + 1);
+        const botMessage = {
+          sender: "bot",
+          text: botQuestions[questionIndex + 1],
+          time: new Date(),
+        };
+        setMessages((prev) => [...prev, botMessage]);
+        setBotTyping(false);
+      }, 1200);
+    } else {
+      setBotTyping(true);
+      setTimeout(() => {
+        const botMessage = {
+          sender: "bot",
+          text: "🎉 Great! Your daily standup is complete. Have a productive day!",
+          time: new Date(),
+        };
+        setMessages((prev) => [...prev, botMessage]);
+        setBotTyping(false);
+      }, 1200);
+    }
+  };
+
+  const formatTime = (date) => {
+    const d = new Date(date);
+    return d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
   };
 
   return (
-    <div className="flex min-h-screen bg-[#121212] text-white">
+    <div className="flex min-h-screen bg-gradient-to-r from-gray-900 via-gray-800 to-gray-900 text-white">
       <SideBar />
 
-      <main className={`flex-1 flex flex-col ${isOpen ? "ml-64" : "ml-20"}`}>
-        <header className="flex items-center justify-between px-6 py-4 bg-[#1b1b1b] border-b border-gray-700">
-          <h1 className="text-2xl font-bold">Developer Dashboard</h1>
-          <div className="flex items-center gap-4">
-            <div className="relative">
-              <Search className="absolute top-2.5 left-2.5 text-gray-400" size={18} />
+      <main className={`flex-1 ${isOpen ? "ml-64" : "ml-20"} p-6`}>
+        {!standupStarted ? (
+          <div className="bg-gradient-to-r from-gray-800 to-gray-700 p-10 rounded-xl shadow-2xl w-full max-w-2xl mx-auto mt-12 text-center animate-fade-in">
+            <UserCheck size={50} className="mx-auto mb-4 text-green-400" />
+            <h1 className="text-4xl font-bold mb-4 text-green-400">
+              Hi {user?.name || "Developer"}!
+            </h1>
+            <p className="text-lg mb-6 text-gray-300">
+              I hope you completed your tasks yesterday. ✅
+            </p>
+            <p className="text-lg mb-6 text-gray-300">
+              Can we start the daily standup to acknowledge your project progress?
+            </p>
+            <button
+              onClick={handleStartStandup}
+              className="bg-green-500 hover:bg-green-600 px-8 py-3 rounded-full text-lg font-semibold shadow-lg transition-transform transform hover:scale-105"
+            >
+              Start Daily Standup
+            </button>
+          </div>
+        ) : (
+          <div className="bg-gray-800 p-6 rounded-xl shadow-2xl w-full max-w-2xl mx-auto mt-12 flex flex-col h-[600px]">
+            <h1 className="text-3xl font-bold mb-4 flex items-center gap-2 text-green-400">
+              <CheckSquare size={28} /> Daily Standup
+            </h1>
+            <div className="flex-1 overflow-y-auto mb-4 flex flex-col space-y-3 px-2">
+              {messages.map((msg, index) => (
+                <div
+                  key={index}
+                  className={`flex ${
+                    msg.sender === "user" ? "justify-end" : "justify-start"
+                  }`}
+                >
+                  <div className="flex items-end gap-2">
+                    {msg.sender === "bot" && (
+                      <div className="w-8 h-8 bg-green-400 rounded-full flex items-center justify-center text-black font-bold">
+                        B
+                      </div>
+                    )}
+                    <div
+                      className={`p-3 rounded-lg max-w-[70%] shadow-md relative ${
+                        msg.sender === "user"
+                          ? "bg-gradient-to-r from-green-500 to-green-600 text-white"
+                          : "bg-gray-700 text-white border-l-4 border-green-400"
+                      }`}
+                    >
+                      <span>{msg.text}</span>
+                      <span className="absolute text-xs text-gray-300 bottom-1 right-2">
+                        {formatTime(msg.time)}
+                      </span>
+                    </div>
+                    {msg.sender === "user" && (
+                      <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center text-white font-bold">
+                        {user?.name?.charAt(0) || "U"}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              ))}
+
+              {botTyping && (
+                <div className="flex justify-start items-center gap-2">
+                  <div className="w-8 h-8 bg-green-400 rounded-full flex items-center justify-center text-black font-bold">
+                    B
+                  </div>
+                  <div className="bg-gray-700 text-white p-3 rounded-lg max-w-[40%] relative animate-pulse">
+                    <span className="flex space-x-1">
+                      <span className="w-2 h-2 bg-white rounded-full animate-bounce"></span>
+                      <span className="w-2 h-2 bg-white rounded-full animate-bounce delay-200"></span>
+                      <span className="w-2 h-2 bg-white rounded-full animate-bounce delay-400"></span>
+                    </span>
+                  </div>
+                </div>
+              )}
+              <div ref={chatEndRef}></div>
+            </div>
+
+            <div className="flex gap-2">
               <input
                 type="text"
-                placeholder="Search..."
-                className="pl-8 pr-3 py-2 rounded-md bg-[#2a2a2a] text-sm text-white placeholder-gray-400 focus:outline-none"
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                className="flex-1 p-3 rounded-lg bg-gray-700 text-white focus:outline-none placeholder-gray-400"
+                placeholder="Type your answer..."
+                onKeyDown={(e) => e.key === "Enter" && handleSendMessage()}
               />
+              <button
+                onClick={handleSendMessage}
+                className="bg-green-500 hover:bg-green-600 px-4 py-3 rounded-lg font-semibold transition-transform transform hover:scale-105"
+              >
+                Send
+              </button>
             </div>
-            <Bell className="cursor-pointer text-gray-300 hover:text-white" />
-            <Calendar className="cursor-pointer text-gray-300 hover:text-white" />
+
+            <div className="flex justify-between mt-2 text-gray-400 text-sm">
+              <span>
+                <Clock size={16} /> Scrum Bot
+              </span>
+              <span>
+                <AlertTriangle size={16} /> Standup Reminder
+              </span>
+            </div>
           </div>
-        </header>
-
-        <div className="flex flex-1 overflow-hidden">
-          <div className="flex-1 p-6 overflow-y-auto">
-            {!tabView ? (
-              <div className="bg-[#1f1f1f] p-6 rounded-xl shadow-lg">
-                <h2 className="text-lg font-semibold mb-4">Daily Questions</h2>
-                {questions.map((q, i) => (
-                  <div key={i} className="mb-4">
-                    <p className="font-medium">{q.questionText}</p>
-                    <input
-                      type="text"
-                      className="w-full mt-1 p-2 rounded-md bg-[#2a2a2a] text-white"
-                      onChange={(e) => setAnswers({ ...answers, [q._id]: e.target.value })}
-                    />
-                  </div>
-                ))}
-                <button
-                  className="bg-blue-600 px-4 py-2 rounded-md hover:bg-blue-700 mt-2"
-                  onClick={submitAnswers}
-                >
-                  Submit Answers
-                </button>
-              </div>
-            ) : (
-              <div className="flex flex-col gap-6">
-                {/* Tabs */}
-                <div className="flex gap-4 mb-4">
-                  <button className="px-4 py-2 bg-[#2a2a2a] rounded-md hover:bg-[#374151]">Team</button>
-                  <button className="px-4 py-2 bg-[#2a2a2a] rounded-md hover:bg-[#374151]">Project Progress</button>
-                  <button className="px-4 py-2 bg-[#2a2a2a] rounded-md hover:bg-[#374151]">Past Answers</button>
-                </div>
-
-                {/* Team Details */}
-                <div className="bg-[#1f1f1f] p-6 rounded-xl shadow-lg">
-                  <h2 className="text-lg font-semibold mb-3">Team Members</h2>
-                  <ul className="space-y-2">
-                    {teamData.members?.map((member, i) => (
-                      <li key={i} className="bg-[#2a2a2a] p-3 rounded-md">{member.name}</li>
-                    ))}
-                  </ul>
-                </div>
-
-                {/* Project Progress */}
-                <div className="bg-[#1f1f1f] p-6 rounded-xl shadow-lg">
-                  <h2 className="text-lg font-semibold mb-3">Project Progress</h2>
-                  <div className="w-full h-6 bg-[#2a2a2a] rounded-full overflow-hidden">
-                    <div
-                      className="h-full bg-green-500 transition-all"
-                      style={{ width: `${projectProgress}%` }}
-                    />
-                  </div>
-                  <p className="text-sm mt-2">{projectProgress}% Completed</p>
-                </div>
-
-                {/* Past Answers */}
-                <div className="bg-[#1f1f1f] p-6 rounded-xl shadow-lg">
-                  <h2 className="text-lg font-semibold mb-3">Past Daily Answers</h2>
-                  <ul className="space-y-2">
-                    {teamData.pastAnswers?.map((ans, i) => (
-                      <li key={i} className="bg-[#2a2a2a] p-3 rounded-md">
-                        <p><strong>Q:</strong> {ans.question}</p>
-                        <p><strong>A:</strong> {ans.answer}</p>
-                        <p className="text-xs text-gray-400">{ans.date}</p>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
+        )}
       </main>
     </div>
   );

@@ -112,7 +112,7 @@ const SideBar = () => {
               </NavLink>
 
               <NavLink
-                to="/Performance"
+                to="/ScrumTeams"
                 className={({ isActive }) =>
                   `flex items-center gap-3 px-3 py-2 rounded-md ${
                     isActive ? "bg-gray-800 font-semibold" : "hover:bg-gray-700"
@@ -120,7 +120,7 @@ const SideBar = () => {
                 }
               >
                 <FaBan />
-                {isOpen && <span>Team Performance</span>}
+                {isOpen && <span>Teams Performance</span>}
               </NavLink>
 
               <NavLink
@@ -174,7 +174,7 @@ const SideBar = () => {
               </NavLink>
 
               <NavLink
-                to="/teamMembers"
+                to="/TeamMembers"
                 className={({ isActive }) =>
                   `flex items-center gap-3 px-3 py-2 rounded-md ${
                     isActive ? "bg-gray-800 font-semibold" : "hover:bg-gray-700"
@@ -182,7 +182,7 @@ const SideBar = () => {
                 }
               >
                 <FaUsers />
-                {isOpen && <span>Team Menbers</span>}
+                {isOpen && <span>Team Members</span>}
               </NavLink>
             </>
           )}

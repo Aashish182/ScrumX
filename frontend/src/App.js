@@ -28,6 +28,8 @@ import Performance from './pages/Performance';
 import AllQueries from './components/AllQueries';
 import AllTeams from './components/AllTeams';
 import CreateTeam from './pages/CreateTeam';
+import TeamMembers from './components/TeamMembers';
+import ScrumTeams from './components/ScrumTeams';
 
 function App() {
   const dispatch = useDispatch();
@@ -145,11 +147,27 @@ function App() {
         </>
       ),
     },
+    // {
+    //   path: '/ScrumMaster/Dashboard',
+    //   element: (
+    //     <>
+    //       <ScrumHome />
+    //     </>
+    //   ),
+    // },
     {
-      path: '/ScrumMaster/Dashboard',
+      path: '/TeamMembers',
       element: (
         <>
-          <ScrumHome />
+          <TeamMembers />
+        </>
+      ),
+    },
+    {
+      path: '/ScrumTeams',
+      element: (
+        <>
+          <ScrumTeams />
         </>
       ),
     },
