@@ -28,18 +28,15 @@ export default function Blog() {
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  // Handle image upload
   const transformFile = (e) => {
     const file = e.target.files[0];
     if (!file) return;
 
-    // ✅ Type check
     if (!file.type.startsWith("image/")) {
       alert("Please upload a valid image file.");
       return;
     }
 
-    // ✅ Size check (10 MB)
     const maxSize = 10 * 1024 * 1024;
     if (file.size > maxSize) {
       alert("Image size must be less than 10 MB.");
@@ -105,9 +102,7 @@ export default function Blog() {
 
   return (
     <div className="bg-gray-900 text-white min-h-screen flex flex-col">
-      {/* Main Content */}
       <div className="flex-grow px-6 py-12">
-        {/* Header */}
         <header className="text-center mb-16 mt-10">
           <h1 className="text-4xl font-bold text-green-400 mb-4">
             Latest Blogs on Salary Prediction
@@ -185,7 +180,7 @@ export default function Blog() {
 
             {/* Image */}
             <label className="block text-sm text-gray-300 mb-2 mt-4">
-              Upload Image (Max 10MB) *
+              Upload Image (Max 50KB) *
             </label>
             <input
               type="file"
