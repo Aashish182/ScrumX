@@ -74,6 +74,22 @@ const SummaryApi = {
     getMyTasks: {
         url: `${backendDomain}/api/my-tasks`,
         method: "get"
+    },
+    sendSubtaskNotifications: {
+        url: `${backendDomain}/api/assign-subtasks`,
+        method: "post"
+    },
+    getPendingInvitations: {
+        url: `${backendDomain}/api/pending-invitations`,
+        method: "get"
+    },
+    respondToSubtask: {
+        url: `${backendDomain}/api/respond-subtask`,
+        method: "post"
+    },
+    getCurrentSprint: {
+        url: `${backendDomain}/api/current-sprint`,
+        method: "get"
     }
 }
 

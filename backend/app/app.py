@@ -227,88 +227,175 @@ def clean_json(text):
     match = re.search(r"\{.*\}", text, re.DOTALL)
     return json.loads(match.group()) if match else {}
 
-@app.route("/generate_sprint", methods=["POST"])
+# @app.route("/generate_sprint", methods=["POST"])
+# def generate_sprint():
+#     try:
+#         payload = request.json
+
+#         # project_id = payload["project_id"]
+#         sprint_name = payload["sprint_name"]
+#         sprint_days = payload["sprint_length_days"]
+#         team_size = payload["team_size"]
+#         user_stories = payload["user_stories"]
+
+#         # 1️⃣ Generate Sprint Plan using LLM
+#         prompt = sprint_prompt.invoke({
+#             "stories": json.dumps(user_stories),
+#             "team_size": team_size,
+#             "sprint_days": sprint_days
+#         })
+
+#         response = model.invoke(prompt)
+#         print(response.content)
+#         sprint_data = clean_json(response.content)
+
+#         # 2️⃣ Insert Sprint
+#         sprint_doc = {
+#             "name": sprint_data["sprint_name"],
+#             "goal": sprint_data["sprint_goal"],
+#             # "project_id": project_id,
+#             "team_size": team_size,
+#             "team_members": [DEV_ID],
+#             "start_date": date.today().isoformat(),
+#             "end_date": date.today().isoformat(),
+#             "status": "Planned",
+#             "created_at": datetime.utcnow()
+#         }
+
+#         sprint_id = sprints_col.insert_one(sprint_doc).inserted_id
+
+#         # 3️⃣ Insert Stories → Tasks → Subtasks
+#         for story in sprint_data["stories"]:
+#             story_id = stories_col.insert_one({
+#                 "story_code": story["story_id"],
+#                 "title": story["title"],
+#                 "sprint_id": sprint_id,
+#                 "status": "To Do",
+#                 "created_at": datetime.utcnow()
+#             }).inserted_id
+
+#             for task in story["tasks"]:
+#                 task_id = tasks_col.insert_one({
+#                     "title": task["title"],
+#                     "description": task["description"],
+#                     "story_id": story_id,
+#                     "sprint_id": sprint_id,
+#                     "status": "To Do",
+#                     "created_at": datetime.utcnow()
+#                 }).inserted_id
+
+#                 for sub in task["subtasks"]:
+#                     subtasks_col.insert_one({
+#                         "title": sub["title"],
+#                         "description": sub["description"],
+#                         "task_id": task_id,
+#                         "assignee_id": DEV_ID,
+#                         "status": "To Do",
+#                         "estimated_hours": sub["estimated_hours"],
+#                         "actual_hours": 0,
+#                         "percent_complete": 0,
+#                         "created_at": datetime.utcnow()
+#                     })
+
+#         return jsonify({
+#             "success": True,
+#             "message": "Sprint generated and tasks assigned successfully",
+#             "sprint_id": str(sprint_id),
+#             "goal": sprint_data["sprint_goal"]
+            
+#         }), 201
+
+#     except Exception as e:
+#         return jsonify({
+#             "success": False,
+#             "error": str(e)
+#         }), 500
+
+
+@app.route('/generate_sprint', methods=['POST'])
 def generate_sprint():
     try:
-        payload = request.json
+        data = request.json
+        
+        # Extract basic info
+        project_id = data.get('project_id')
+        developer_id = data.get('developer_id') # Scrum Master ID
+        sprint_name = data.get('sprint_name', 'Unnamed Sprint')
+        user_stories = data.get('user_stories', [])
 
-        project_id = payload["project_id"]
-        sprint_name = payload["sprint_name"]
-        sprint_days = payload["sprint_length_days"]
-        team_size = payload["team_size"]
-        user_stories = payload["user_stories"]
-
-        # 1️⃣ Generate Sprint Plan using LLM
-        prompt = sprint_prompt.invoke({
-            "stories": json.dumps(user_stories),
-            "team_size": team_size,
-            "sprint_days": sprint_days
-        })
-
-        response = model.invoke(prompt)
-        sprint_data = clean_json(response.content)
-
-        # 2️⃣ Insert Sprint
+        # 2. Create the Sprint Record
         sprint_doc = {
-            "name": sprint_data["sprint_name"],
-            "goal": sprint_data["sprint_goal"],
-            "project_id": project_id,
-            "team_size": team_size,
-            "team_members": [DEV_ID],
-            "start_date": date.today().isoformat(),
-            "end_date": date.today().isoformat(),
-            "status": "Planned",
-            "created_at": datetime.utcnow()
+            "sprint_name": sprint_name,
+            "project_id": ObjectId(project_id) if project_id else None,
+            "developer_id": ObjectId(developer_id) if developer_id else None,
+            "status": "Active",
+            "created_at": datetime.datetime.utcnow()
         }
+        sprint_result = db.sprints.insert_one(sprint_doc)
+        sprint_id = sprint_result.inserted_id
 
-        sprint_id = sprints_col.insert_one(sprint_doc).inserted_id
+        tasks_created = []
 
-        # 3️⃣ Insert Stories → Tasks → Subtasks
-        for story in sprint_data["stories"]:
-            story_id = stories_col.insert_one({
-                "story_code": story["story_id"],
-                "title": story["title"],
+        # 3. Process Each User Story
+        for story in user_stories:
+            # Create a "Parent Task" for the User Story (matches your 'tasks' ref)
+            task_doc = {
                 "sprint_id": sprint_id,
-                "status": "To Do",
-                "created_at": datetime.utcnow()
-            }).inserted_id
+                "title": story.get('title'),
+                "description": story.get('description'),
+                "priority": story.get('priority', 'Medium'),
+                "status": "To Do"
+            }
+            task_result = db.tasks.insert_one(task_doc)
+            parent_task_id = task_result.inserted_id
 
-            for task in story["tasks"]:
-                task_id = tasks_col.insert_one({
-                    "title": task["title"],
-                    "description": task["description"],
-                    "story_id": story_id,
-                    "sprint_id": sprint_id,
-                    "status": "To Do",
-                    "created_at": datetime.utcnow()
-                }).inserted_id
+            # 4. AI GENERATION LOGIC 
+            # (Here we simulate the AI breaking the Story into 3 sub-tasks)
+            roles = [
+                {"role": "Developer", "suffix": "Implementation"},
+                {"role": "Tester", "suffix": "Quality Assurance"},
+                {"role": "Analyst", "suffix": "Requirement Mapping"}
+            ]
 
-                for sub in task["subtasks"]:
-                    subtasks_col.insert_one({
-                        "title": sub["title"],
-                        "description": sub["description"],
-                        "task_id": task_id,
-                        "assignee_id": DEV_ID,
-                        "status": "To Do",
-                        "estimated_hours": sub["estimated_hours"],
-                        "actual_hours": 0,
-                        "percent_complete": 0,
-                        "created_at": datetime.utcnow()
-                    })
+            for role_info in roles:
+                subtask_doc = {
+                    "title": f"{role_info['role']}: {story.get('title')} {role_info['suffix']}",
+                    "description": f"AI generated task based on: {story.get('description')}",
+                    "task_id": parent_task_id,      # Correctly linked to parent
+                    "assignee_id": None,            # Initialized as null for Node.js update
+                    "role_tag": role_info['role'],  # Matches your Mongoose Enum
+                    "status": "pending",            # CRITICAL: Triggers notification
+                    "estimated_hours": role_info['default_hours'],           # Mock AI estimation
+                    "actual_hours": 0,
+                    "percent_complete": 0,
+                    "created_at": datetime.datetime.utcnow(),
+                    "updated_at": datetime.datetime.utcnow()
+                }
+                subtask_result = db.subtasks.insert_one(subtask_doc)
+                
+                # We collect this for the frontend to show the list for assignment
+                tasks_created.append({
+                    "id": str(subtask_result.inserted_id),
+                    "title": subtask_doc['title'],
+                    "role": subtask_doc['role_tag']
+                })
 
         return jsonify({
             "success": True,
-            "message": "Sprint generated and tasks assigned successfully",
+            "message": "AI Sprint Generated",
             "sprint_id": str(sprint_id),
-            "goal": sprint_data["sprint_goal"]
-            
-        }), 201
+            "tasks": tasks_created # This list allows the SM to assign members immediately
+        }), 200
 
     except Exception as e:
-        return jsonify({
-            "success": False,
-            "error": str(e)
-        }), 500
+        print(f"Error: {e}")
+        return jsonify({"success": False, "error": str(e)}), 500
+
+if __name__ == '__main__':
+    # Running on Port 5001 as per your React code
+    app.run(port=5001, debug=True)
+
+
 @app.route("/developer/my-tasks", methods=["GET"]) 
 def get_static_developer_tasks():
     try:

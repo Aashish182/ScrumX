@@ -60,7 +60,9 @@ def generate_sprint():
                         "title": sub["title"],
                         "task_id": t_id,
                         "assignee_id": dev_id, # Dynamically assigned to requester
-                        "status": "To Do",
+                        "status": "Pending",
+                        "estimated_hours": sub.get("estimated_hours", 0), # GET FROM LLM JSON
+                        "actual_hours": 0,
                         "percent_complete": 0,
                         "created_at": datetime.utcnow()
                     })

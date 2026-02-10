@@ -21,6 +21,10 @@ const updateTeams = require('../controller/updateTeams');
 const getTeamDetail = require('../controller/teamDetail');
 const { getTeamchatsController } = require('../controller/chatController');
 const getMyTasksController = require('../controller/getMytask');
+const assignSubtasksController = require('../controller/assignSubTasks');
+const getPendingInvitesController = require('../controller/getPendingInvites');
+const respondSubtaskController = require('../controller/respondSubtask');
+const getCurrentSprintController = require('../controller/currentSprint');
 
 
 // Routes
@@ -41,6 +45,10 @@ router.get("/AllTeams", allTeams);
 router.post("/UpdateTeam", updateTeams);
 router.post("/TeamDetail", getTeamDetail);
 router.get("/team-chats/:teamId", getTeamchatsController);
-router.get("/my-tasks",getMyTasksController);
+router.get("/my-tasks",authToken,getMyTasksController);
+router.post("/assign-subtasks", authToken, assignSubtasksController);
+router.get("/pending-invitations",authToken, getPendingInvitesController);
+router.post("/respond-subtask",authToken, respondSubtaskController);
+router.get("/current-sprint", authToken, getCurrentSprintController);
 
 module.exports = router;
