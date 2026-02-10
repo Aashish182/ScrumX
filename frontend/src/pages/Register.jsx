@@ -237,7 +237,7 @@ const Register = () => {
       errors.email = "Invalid email";
     }
 
-    const pass = /^(?=.[a-z])(?=.[A-Z])(?=.\d)(?=.[@$!%?&])[A-Za-z\d@$!%?&]{6,}$/;
+    const pass = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%?&])[A-Za-z\d@$!%?&]{6,}$/;
     if (!pass.test(data.password)) {
       toast.error("Password must be at least 6 characters, include uppercase, lowercase, number, and special character.");
       errors.password = "Weak password";

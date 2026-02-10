@@ -66,6 +66,14 @@ const SummaryApi = {
     teamdetail : {
         url: `${backendDomain}/api/TeamDetail`,
         method : "post"
+    },
+    getTeamchats: {
+        url: `${backendDomain}/api/team-chats`,
+        method: "get"
+    },
+    getMyTasks: {
+        url: `${backendDomain}/api/my-tasks`,
+        method: "get"
     }
 }
 

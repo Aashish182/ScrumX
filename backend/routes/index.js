@@ -19,6 +19,8 @@ const createTeam = require('../controller/createTeam');
 const allTeams = require('../controller/teamDetails');
 const updateTeams = require('../controller/updateTeams');
 const getTeamDetail = require('../controller/teamDetail');
+const { getTeamchatsController } = require('../controller/chatController');
+const getMyTasksController = require('../controller/getMytask');
 
 
 // Routes
@@ -38,5 +40,7 @@ router.post("/CreateTeam", createTeam);
 router.get("/AllTeams", allTeams);
 router.post("/UpdateTeam", updateTeams);
 router.post("/TeamDetail", getTeamDetail);
+router.get("/team-chats/:teamId", getTeamchatsController);
+router.get("/my-tasks",getMyTasksController);
 
 module.exports = router;

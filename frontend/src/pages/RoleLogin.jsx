@@ -47,7 +47,7 @@ const RoleLogin = () => {
         if (user?.role?.toLowerCase() === "developer") {
           navigate("/Developer/Dashboard");
         } else if (user?.role?.toLowerCase() === "scrum_master") {
-          navigate("/Developer/Dashboard");
+          navigate("/ScrumMaster/Dashboard");
         } else {
           navigate("/home");
         }

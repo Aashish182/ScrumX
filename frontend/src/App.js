@@ -15,13 +15,12 @@ import AllUsers from './components/AllUsers';
 import AdminPanel from './pages/AdminPanel';
 import RoleLogin from './pages/RoleLogin';
 import ScrumHome from './pages/ScrumHome';
-import DeveloperHome from './pages/DeveloperHome';
 import Contact from './pages/Contact';
 import AboutUs from './pages/Aboutus';
 import Features from './pages/Features';
 import Blog from './pages/Blog';
 import Retrospectives from './pages/Retrospectives';
-import TeamChat from './pages/TeamChat';
+
 import AccountPreferences from './pages/Preferences';
 import Responses from './pages/Responses';
 import Performance from './pages/Performance';
@@ -30,6 +29,13 @@ import AllTeams from './components/AllTeams';
 import CreateTeam from './pages/CreateTeam';
 import TeamMembers from './components/TeamMembers';
 import ScrumTeams from './components/ScrumTeams';
+import DeveloperDashboard from './pages/DeveloperDashboard';
+import STeamChat from './components/STeamChat';
+import SprintGeneration from './pages/SprintGenerator';
+import ReportGeneration from './pages/ReportGenerator';
+import ProjectTracking from './pages/ProjectTracking';
+import FullPipeline from './pages/FullPipeline';
+import MyTasks from './pages/MyTasks';
 
 function App() {
   const dispatch = useDispatch();
@@ -143,18 +149,18 @@ function App() {
       path: '/Developer/Dashboard',
       element: (
         <>
-          <DeveloperHome />
+          <DeveloperDashboard />
         </>
       ),
     },
-    // {
-    //   path: '/ScrumMaster/Dashboard',
-    //   element: (
-    //     <>
-    //       <ScrumHome />
-    //     </>
-    //   ),
-    // },
+    {
+      path: '/ScrumMaster/Dashboard',
+      element: (
+        <>
+          <ScrumHome />
+        </>
+      ),
+    },
     {
       path: '/TeamMembers',
       element: (
@@ -172,10 +178,10 @@ function App() {
       ),
     },
     {
-      path: '/TeamChat',
+      path: '/STeamChat',
       element: (
         <>
-          <TeamChat />
+          <STeamChat />
         </>
       ),
     },
@@ -208,6 +214,46 @@ function App() {
       element: (
         <>  
           <Responses />
+        </>
+      ),
+    },
+    {
+      path: '/SprintGenerator',
+      element: (
+        <>
+          <SprintGeneration />
+        </>
+      ),
+    },
+    {
+      path: '/projects',
+      element: (
+        <>
+          <ProjectTracking />
+        </>
+      ),
+    },
+    {
+      path: '/MyTasks',
+      element: (
+        <>
+          <MyTasks />
+        </>
+      ),
+    },
+    {
+      path: '/ReportGenerator',
+      element: (
+        <>
+          <ReportGeneration />
+        </>
+      ),
+    },
+    {
+      path: '/Chatbot',
+      element: (
+        <>  
+          <FullPipeline />
         </>
       ),
     },
