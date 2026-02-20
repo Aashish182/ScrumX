@@ -90,6 +90,14 @@ const SummaryApi = {
     getCurrentSprint: {
         url: `${backendDomain}/api/current-sprint`,
         method: "get"
+    },
+    getDeveloperDashboardData: {
+        url: `${backendDomain}/api/developer-dashboard`,
+        method: "post"
+    },
+    updateFocusTask: {
+        url: `${backendDomain}/api/update-focus-task`,
+        method: "post"
     }
 }
 

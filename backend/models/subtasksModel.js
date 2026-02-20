@@ -72,6 +72,11 @@ const subTaskSchema = new mongoose.Schema({
     enum: ['Developer', 'Tester', 'Analyst'],
     default: 'Developer'
   },
+  focus: { 
+    type: String, 
+    enum: ['yes', 'no'], 
+    default: 'no' 
+  },
   status: {
     type: String,
     enum: ['Draft','Pending', 'To Do', 'In Progress', 'Done', 'Rejected'],
