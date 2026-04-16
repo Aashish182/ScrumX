@@ -26,6 +26,7 @@ const getPendingInvitesController = require('../controller/getPendingInvites');
 const respondSubtaskController = require('../controller/respondSubtask');
 const getCurrentSprintController = require('../controller/currentSprint');
 const {getDeveloperDashboardData, updateFocusTask} = require('../controller/devDashboard');
+const userController = require('../controller/userController');
 
 
 
@@ -54,5 +55,8 @@ router.post("/respond-subtask",authToken, respondSubtaskController);
 router.get("/current-sprint", authToken, getCurrentSprintController);
 router.post("/developer-dashboard", authToken,getDeveloperDashboardData);
 router.post("/update-focus-task", authToken, updateFocusTask);
+router.post("/update-user", authToken, userController.updateUser);
+router.get("/get-user-details", authToken, userController.getUserDetails);
+
 
 module.exports = router;

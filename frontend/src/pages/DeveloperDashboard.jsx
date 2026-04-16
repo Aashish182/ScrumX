@@ -1018,8 +1018,331 @@
 // export default DeveloperDashboard;
 
 
+// import React, { useState, useEffect, useRef } from "react";
+// import { Search, Bell, Calendar, CheckCircle, Layout, Flame, Zap, ChevronLeft, ChevronRight, MessageSquare, Clock, X, Check, XCircle } from "lucide-react";
+// import SideBar from "../components/Sidebar";
+// import { useSelector } from "react-redux";
+// import axios from "axios";
+// import SummaryApi from "../common"; 
+// import { NavLink } from "react-router-dom";
+// import { toast } from "react-toastify";
+
+// const DeveloperDashboard = () => {
+//   const isOpen = useSelector((state) => state.sidebar.isOpen);
+//   const user = useSelector(state => state?.user?.user);
+
+//   // 1. STATE DEFINITIONS
+//   const [dbData, setDbData] = useState(null);
+//   const [loading, setLoading] = useState(true);
+//   const [currentMonth, setCurrentMonth] = useState(new Date());
+//   const [notifications, setNotifications] = useState([]);
+//   const [showNotif, setShowNotif] = useState(false);
+//   const notifRef = useRef(null);
+
+//   // 2. CALENDAR CALCULATIONS
+//   const daysOfWeek = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+//   const startOfMonth = new Date(currentMonth.getFullYear(), currentMonth.getMonth(), 1);
+//   const endOfMonth = new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1, 0);
+//   const daysInMonth = endOfMonth.getDate();
+//   const startDay = startOfMonth.getDay();
+//   const monthYear = currentMonth.toLocaleDateString("en-US", { month: "long", year: "numeric" });
+
+//   const prevMonth = () => setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() - 1, 1));
+//   const nextMonth = () => setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1, 1));
+
+//   // 3. FETCH LOGIC
+//   const fetchDevData = async () => {
+//     try {
+//       const response = await axios({
+//         url: SummaryApi.getDeveloperDashboardData.url,
+//         method: SummaryApi.getDeveloperDashboardData.method,
+//         withCredentials: true,
+//       });
+//       if (response.data.success) setDbData(response.data.data);
+//     } catch (err) { console.error("Data fetch error", err); }
+//     finally { setLoading(false); }
+//   };
+
+//   const fetchNotifications = async () => {
+//     try {
+//       const response = await axios({
+//           url: SummaryApi.getPendingInvitations.url,
+//           method: SummaryApi.getPendingInvitations.method,
+//           withCredentials: true 
+//       });
+//       if (response.data.success) setNotifications(response.data.data);
+//     } catch (err) { console.error("Error fetching invitations", err); }
+//   };
+
+//   useEffect(() => {
+//     if (user?._id) {
+//       fetchDevData();
+//       fetchNotifications();
+//     }
+//   }, [user, currentMonth]);
+
+//   // 4. FOCUS & HANDSHAKE HANDLERS
+//   const handleToggleFocus = async (taskId, currentFocusStatus) => {
+//     try {
+//       const newStatus = currentFocusStatus === "yes" ? "no" : "yes";
+//       const response = await axios({
+//         url: SummaryApi.updateFocusTask.url,
+//         method: SummaryApi.updateFocusTask.method,
+//         data: { taskId, focus: newStatus },
+//         withCredentials: true 
+//       });
+
+//       if (response.data.success) {
+//         toast.success(newStatus === "yes" ? "Task Focused" : "Focus Removed");
+//         fetchDevData(); 
+//       }
+//     } catch (err) { toast.error("Failed to update focus"); }
+//   };
+
+//   const handleResponse = async (subtaskId, isAccepted) => {
+//     try {
+//       const response = await axios({
+//           url: SummaryApi.respondToSubtask.url,
+//           method: SummaryApi.respondToSubtask.method,
+//           data: { subtaskId, accept: isAccepted, userId: user?._id },
+//           withCredentials: true
+//       });
+//       if (response.data.success) {
+//         setNotifications(prev => prev.filter(item => item._id !== subtaskId));
+//         fetchDevData(); 
+//         toast.success(isAccepted ? "Task Accepted!" : "Task Rejected");
+//       }
+//     } catch (err) { toast.error("Action failed"); }
+//   };
+
+//   // Close notifications on outside click
+//   useEffect(() => {
+//     const handleClickOutside = (event) => {
+//       if (notifRef.current && !notifRef.current.contains(event.target)) setShowNotif(false);
+//     };
+//     document.addEventListener("mousedown", handleClickOutside);
+//     return () => document.removeEventListener("mousedown", handleClickOutside);
+//   }, []);
+
+//   const topCards = [
+//     { title: "Active Sprint", subtitle: dbData?.activeSprint?.sprintName || "Idle", status: `${dbData?.activeSprint?.daysLeft || 0} Days Left`, icon: <Zap className="text-yellow-400" /> },
+//     { title: "My Tasks", subtitle: "Sprint Allocation", status: `${dbData?.stats?.totalTasks || 0} Tasks Total`, icon: <Layout className="text-blue-400" /> },
+//     { title: "Blockers", subtitle: "Action Required", status: `${dbData?.stats?.blockers || 0} Active`, icon: <Flame className="text-red-400" /> },
+//     { title: "Velocity", subtitle: "Last 3 Sprints", status: "Avg: 12pts", icon: <CheckCircle className="text-green-400" /> },
+//   ];
+
+//   return (
+//     <div className="flex min-h-screen bg-[#121212] text-white">
+//       <SideBar />
+
+//       <main className={`flex-1 flex flex-col transition-all duration-300 ${isOpen ? "ml-64" : "ml-20"}`}>
+//         {/* Header */}
+//         <header className="flex items-center justify-between px-6 py-4 bg-[#1b1b1b] border-b border-gray-700 relative z-50">
+//           <div>
+//             <h1 className="text-2xl font-bold">Mission Control</h1>
+//             <p className="text-[10px] text-blue-500 font-bold uppercase tracking-widest">Role: {user?.role || "Developer"}</p>
+//           </div>
+
+//           <div className="flex items-center gap-6">
+//             <div className="relative" ref={notifRef}>
+//               <button onClick={() => setShowNotif(!showNotif)} className="relative p-2 text-gray-400 hover:text-white transition-colors">
+//                 <Bell size={22} />
+//                 {notifications.length > 0 && (
+//                   <span className="absolute top-1 right-1 w-4 h-4 bg-red-600 text-white text-[10px] flex items-center justify-center rounded-full border-2 border-[#1b1b1b] animate-bounce">
+//                     {notifications.length}
+//                   </span>
+//                 )}
+//               </button>
+
+//               {showNotif && (
+//                 <div className="absolute right-0 mt-3 w-80 bg-[#1f1f1f] border border-gray-700 rounded-xl shadow-2xl overflow-hidden animate-in fade-in slide-in-from-top-2">
+//                   <div className="p-4 border-b border-gray-700 bg-[#252525]"><h3 className="text-sm font-bold">New Task Invitations</h3></div>
+//                   <div className="max-h-96 overflow-y-auto">
+//                     {notifications.length === 0 ? (
+//                       <div className="p-8 text-center text-gray-500 text-xs italic">No new tasks for now.</div>
+//                     ) : (
+//                       notifications.map((notif) => (
+//                         <div key={notif._id} className="p-4 border-b border-gray-800 hover:bg-white/[0.02]">
+//                           <p className="text-xs font-bold text-blue-400 mb-1">{notif.title}</p>
+//                           <div className="flex gap-2 mt-3">
+//                             <button onClick={() => handleResponse(notif._id, true)} className="flex-1 flex items-center justify-center gap-1 bg-green-600/20 text-green-500 text-[10px] font-bold py-1.5 rounded hover:bg-green-600 hover:text-white transition-all"><Check size={12} /> ACCEPT</button>
+//                             <button onClick={() => handleResponse(notif._id, false)} className="flex-1 flex items-center justify-center gap-1 bg-red-600/20 text-red-500 text-[10px] font-bold py-1.5 rounded hover:bg-red-600 hover:text-white transition-all"><X size={12} /> REJECT</button>
+//                           </div>
+//                         </div>
+//                       ))
+//                     )}
+//                   </div>
+//                 </div>
+//               )}
+//             </div>
+//             <div className="relative hidden md:block">
+//               <Search className="absolute top-2.5 left-2.5 text-gray-400" size={18} />
+//               <input type="text" placeholder="Search tasks..." className="pl-9 pr-4 py-2 rounded-md bg-[#2a2a2a] text-sm focus:outline-none border border-white/5" />
+//             </div>
+//           </div>
+//         </header>
+
+//         <div className="flex flex-1 overflow-hidden">
+//           {/* Main Dashboard Area */}
+//           <div className="flex-1 p-6 overflow-y-auto custom-scrollbar">
+//             {/* Top Cards */}
+//             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+//               {topCards.map((card, i) => (
+//                 <div key={i} className="bg-[#1b1b1b] rounded-xl p-5 border border-white/5 group hover:bg-white/[0.02] transition-all shadow-lg">
+//                   <div className="mb-3 p-2 w-fit bg-white/5 rounded-lg group-hover:bg-white/10 transition-colors">{card.icon}</div>
+//                   <h2 className="font-semibold text-gray-200">{card.title}</h2>
+//                   <p className="text-sm text-gray-400">{card.subtitle}</p>
+//                   <div className="mt-2 text-xs font-bold text-blue-500 tracking-tighter">{card.status}</div>
+//                 </div>
+//               ))}
+//             </div>
+
+//             {/* Calendar View */}
+//             <div className="p-6 bg-[#1b1b1b] rounded-xl shadow-lg border border-white/5">
+//               <div className="flex justify-between items-center mb-6">
+//                 <h2 className="text-lg font-bold flex items-center gap-2"><Calendar size={20} className="text-blue-500" /> Sprint Timeline</h2>
+//                 <div className="flex items-center gap-3">
+//                   <button onClick={prevMonth} className="p-1.5 rounded-md hover:bg-[#2a2a2a] bg-[#121212] border border-white/5"><ChevronLeft size={18}/></button>
+//                   <span className="text-sm font-medium w-32 text-center text-gray-300">{monthYear}</span>
+//                   <button onClick={nextMonth} className="p-1.5 rounded-md hover:bg-[#2a2a2a] bg-[#121212] border border-white/5"><ChevronRight size={18}/></button>
+//                 </div>
+//               </div>
+
+//               <div className="grid grid-cols-7 text-center text-[10px] mb-3 font-bold text-gray-500 uppercase tracking-widest">
+//                 {daysOfWeek.map((day) => <div key={day}>{day}</div>)}
+//               </div>
+
+//               <div className="grid grid-cols-7 gap-2">
+//                 {Array.from({ length: startDay }).map((_, i) => <div key={`empty-${i}`} />)}
+//                 {Array.from({ length: daysInMonth }, (_, i) => {
+//                   const day = i + 1;
+//                   const dateObj = new Date(currentMonth.getFullYear(), currentMonth.getMonth(), day);
+//                   const dayEvents = dbData?.monthlyTasks?.filter(t => new Date(t.created_at).toDateString() === dateObj.toDateString());
+//                   const isToday = new Date().toDateString() === dateObj.toDateString();
+
+//                   return (
+//                     <div key={i} className={`min-h-[100px] p-2 rounded-lg border transition-all ${isToday ? "border-blue-500 bg-blue-500/5 shadow-inner" : "border-white/5 bg-[#232323]"}`}>
+//                       <span className={`text-xs font-bold ${isToday ? "text-blue-400" : "text-gray-600"}`}>{day}</span>
+//                       <div className="mt-1 space-y-1">
+//                         {dayEvents?.map((event, idx) => (
+//                           <div 
+//                             key={idx} 
+//                             onClick={() => handleToggleFocus(event._id, event.focus)}
+//                             className={`p-1.5 text-[9px] font-bold rounded cursor-pointer truncate transition-all border-l-2
+//                               ${event.focus === 'yes' ? 'bg-blue-600 text-white border-white scale-105 shadow-md' : 'bg-blue-600/10 border-blue-500/50 text-blue-100 hover:bg-blue-600/20'}`}
+//                           >
+//                             {event.title}
+//                           </div>
+//                         ))}
+//                       </div>
+//                     </div>
+//                   );
+//                 })}
+//               </div>
+//             </div>
+//           </div>
+
+//           {/* Right Sidebar */}
+//           <aside className="w-80 bg-[#1b1b1b] border-l border-gray-700 p-6 hidden xl:flex flex-col gap-8 overflow-y-auto custom-scrollbar">
+//             {/* Focus Task Section */}
+//             <div>
+//               <div className="flex justify-between items-center mb-4">
+//                 <h3 className="text-[10px] font-black text-gray-500 uppercase tracking-widest">Focus Task</h3>
+//                 {dbData?.stats?.focusTask && <span className="text-[9px] font-bold text-blue-500 px-2 py-0.5 bg-blue-500/10 rounded-full animate-pulse">ACTIVE</span>}
+//               </div>
+              
+//               {dbData?.stats?.focusTask ? (
+//                 <div className="bg-[#232323] p-5 rounded-2xl border border-white/5 shadow-xl relative group">
+//                   <button 
+//                     onClick={() => handleToggleFocus(dbData.stats.focusTask._id, "yes")}
+//                     className="absolute top-2 right-2 text-gray-600 hover:text-red-500 transition-colors"
+//                   >
+//                     <XCircle size={16} />
+//                   </button>
+//                   <p className="text-sm font-bold text-white mb-1 pr-4">{dbData.stats.focusTask.title}</p>
+//                   <p className="text-[10px] text-gray-500 mb-4 flex items-center gap-1"><Clock size={10} /> Active Session</p>
+                  
+//                   <div className="space-y-2">
+//                     <div className="w-full bg-gray-800 h-1.5 rounded-full overflow-hidden">
+//                       <div className="bg-blue-500 h-full shadow-[0_0_8px_rgba(59,130,246,0.5)] transition-all duration-1000" style={{ width: `${dbData.stats.focusTask.percent_complete}%` }} />
+//                     </div>
+//                     <div className="flex justify-between items-center text-[9px] font-bold">
+//                       <span className="text-gray-500 uppercase">Progress</span>
+//                       <span className="text-blue-400">{dbData.stats.focusTask.percent_complete}%</span>
+//                     </div>
+//                   </div>
+//                 </div>
+//               ) : (
+//                 <div className="text-center py-10 border-2 border-dashed border-white/5 rounded-2xl bg-white/[0.01]">
+//                   <p className="text-xs text-gray-600 italic">No task in focus</p>
+//                   <p className="text-[9px] text-gray-700 mt-1 uppercase font-bold tracking-tighter">Select from calendar</p>
+//                 </div>
+//               )}
+//             </div>
+
+//             {/* PR Monitor (Mock Data as requested) */}
+//             <div>
+//               <h3 className="text-[10px] font-black text-gray-500 uppercase tracking-widest mb-4">Pull Requests</h3>
+//               <div className="space-y-3">
+//                 {[
+//                   { id: 'PR-102', title: 'Auth Fix', status: 'Reviewing', color: 'text-yellow-500' },
+//                   { id: 'PR-105', title: 'Nav UI', status: 'Approved', color: 'text-green-500' }
+//                 ].map((pr) => (
+//                   <div key={pr.id} className="group flex items-center justify-between p-3 bg-[#232323] hover:bg-[#2a2a2a] rounded-xl border border-white/5 transition-colors">
+//                     <div>
+//                       <p className="text-[11px] font-bold text-gray-200 group-hover:text-blue-400">{pr.id}</p>
+//                       <p className="text-[10px] text-gray-500">{pr.title}</p>
+//                     </div>
+//                     <span className={`text-[9px] font-black uppercase ${pr.color}`}>{pr.status}</span>
+//                   </div>
+//                 ))}
+//               </div>
+//             </div>
+
+//             {/* Utilities */}
+//             <div className="mt-4">
+//               <h3 className="text-[10px] font-black text-gray-500 uppercase tracking-widest mb-4">Utilities</h3>
+//               <div className="grid grid-cols-2 gap-2">
+//                 <NavLink to="/TeamMembers" className="flex flex-col items-center justify-center p-3 bg-white/5 hover:bg-white/10 rounded-xl border border-white/5 transition-all group">
+//                   <MessageSquare size={16} className="text-gray-400 group-hover:text-blue-400 mb-1" />
+//                   <span className="text-[9px] font-bold text-gray-400 group-hover:text-gray-200 uppercase">Chat</span>
+//                 </NavLink>
+//                 <button className="flex flex-col items-center justify-center p-3 bg-white/5 hover:bg-white/10 rounded-xl border border-white/5 transition-all group">
+//                   <Layout size={16} className="text-gray-400 group-hover:text-purple-400 mb-1" />
+//                   <span className="text-[9px] font-bold text-gray-400 group-hover:text-gray-200 uppercase">Docs</span>
+//                 </button>
+//               </div>
+//             </div>
+
+//             {/* Sticky Bottom Standup */}
+//             <div className="mt-auto bg-gradient-to-br from-indigo-600 to-blue-700 p-5 rounded-2xl shadow-xl relative overflow-hidden group">
+//               <Zap className="absolute -right-4 -top-4 w-20 h-20 text-white/10 rotate-12 group-hover:scale-110 transition-transform" />
+//               <div className="relative z-10">
+//                 <div className="flex items-center gap-2 mb-2">
+//                   <CheckCircle size={16} className="text-blue-200" />
+//                   <p className="text-xs font-black text-white uppercase">Standup Ready</p>
+//                 </div>
+//                 <p className="text-[10px] text-blue-100/80 leading-relaxed mb-4">We've compiled your activity into a draft update.</p>
+//                 <button className="w-full bg-white text-blue-700 text-[10px] font-black py-2.5 rounded-lg uppercase tracking-widest hover:bg-blue-50 transition-colors">Sync with Bot</button>
+//               </div>
+//             </div>
+//           </aside>
+//         </div>
+//       </main>
+//     </div>
+//   );
+// };
+
+// export default DeveloperDashboard;
+
+
+
 import React, { useState, useEffect, useRef } from "react";
-import { Search, Bell, Calendar, CheckCircle, Layout, Flame, Zap, ChevronLeft, ChevronRight, MessageSquare, Clock, X, Check, XCircle } from "lucide-react";
+import { 
+  Search, Bell, Calendar, CheckCircle, Layout, Flame, Zap, 
+  ChevronLeft, ChevronRight, MessageSquare, Clock, X, Check, 
+  XCircle, Terminal, Coffee, Activity, Code2, ExternalLink
+} from "lucide-react";
 import SideBar from "../components/Sidebar";
 import { useSelector } from "react-redux";
 import axios from "axios";
@@ -1031,7 +1354,6 @@ const DeveloperDashboard = () => {
   const isOpen = useSelector((state) => state.sidebar.isOpen);
   const user = useSelector(state => state?.user?.user);
 
-  // 1. STATE DEFINITIONS
   const [dbData, setDbData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [currentMonth, setCurrentMonth] = useState(new Date());
@@ -1039,7 +1361,7 @@ const DeveloperDashboard = () => {
   const [showNotif, setShowNotif] = useState(false);
   const notifRef = useRef(null);
 
-  // 2. CALENDAR CALCULATIONS
+  // Calendar logic
   const daysOfWeek = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
   const startOfMonth = new Date(currentMonth.getFullYear(), currentMonth.getMonth(), 1);
   const endOfMonth = new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1, 0);
@@ -1050,7 +1372,6 @@ const DeveloperDashboard = () => {
   const prevMonth = () => setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() - 1, 1));
   const nextMonth = () => setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1, 1));
 
-  // 3. FETCH LOGIC
   const fetchDevData = async () => {
     try {
       const response = await axios({
@@ -1081,7 +1402,6 @@ const DeveloperDashboard = () => {
     }
   }, [user, currentMonth]);
 
-  // 4. FOCUS & HANDSHAKE HANDLERS
   const handleToggleFocus = async (taskId, currentFocusStatus) => {
     try {
       const newStatus = currentFocusStatus === "yes" ? "no" : "yes";
@@ -1091,12 +1411,11 @@ const DeveloperDashboard = () => {
         data: { taskId, focus: newStatus },
         withCredentials: true 
       });
-
       if (response.data.success) {
-        toast.success(newStatus === "yes" ? "Task Focused" : "Focus Removed");
+        toast.success(newStatus === "yes" ? "System Focus Initialized" : "Focus Disengaged");
         fetchDevData(); 
       }
-    } catch (err) { toast.error("Failed to update focus"); }
+    } catch (err) { toast.error("Hardware interrupt: Focus update failed"); }
   };
 
   const handleResponse = async (subtaskId, isAccepted) => {
@@ -1110,12 +1429,11 @@ const DeveloperDashboard = () => {
       if (response.data.success) {
         setNotifications(prev => prev.filter(item => item._id !== subtaskId));
         fetchDevData(); 
-        toast.success(isAccepted ? "Task Accepted!" : "Task Rejected");
+        toast.success(isAccepted ? "Unit testing approved!" : "Request Terminated");
       }
     } catch (err) { toast.error("Action failed"); }
   };
 
-  // Close notifications on outside click
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (notifRef.current && !notifRef.current.contains(event.target)) setShowNotif(false);
@@ -1125,48 +1443,71 @@ const DeveloperDashboard = () => {
   }, []);
 
   const topCards = [
-    { title: "Active Sprint", subtitle: dbData?.activeSprint?.sprintName || "Idle", status: `${dbData?.activeSprint?.daysLeft || 0} Days Left`, icon: <Zap className="text-yellow-400" /> },
-    { title: "My Tasks", subtitle: "Sprint Allocation", status: `${dbData?.stats?.totalTasks || 0} Tasks Total`, icon: <Layout className="text-blue-400" /> },
-    { title: "Blockers", subtitle: "Action Required", status: `${dbData?.stats?.blockers || 0} Active`, icon: <Flame className="text-red-400" /> },
-    { title: "Velocity", subtitle: "Last 3 Sprints", status: "Avg: 12pts", icon: <CheckCircle className="text-green-400" /> },
+    { title: "Active Sprint", subtitle: dbData?.activeSprint?.sprintName || "System Idle", status: `${dbData?.activeSprint?.daysLeft || 0} Days Remaining`, icon: <Zap className="text-amber-400" />, color: "from-amber-500/20" },
+    { title: "Task Load", subtitle: "Sprint Allocation", status: `${dbData?.stats?.totalTasks || 0} Active Units`, icon: <Code2 className="text-indigo-400" />, color: "from-indigo-500/20" },
+    { title: "Blockers", subtitle: "Action Required", status: `${dbData?.stats?.blockers || 0} Impediments`, icon: <Flame className="text-rose-400" />, color: "from-rose-500/20" },
+    { title: "Velocity", subtitle: "Efficiency Rate", status: "12pts Average", icon: <Activity className="text-emerald-400" />, color: "from-emerald-500/20" },
   ];
 
   return (
-    <div className="flex min-h-screen bg-[#121212] text-white">
+    <div className="flex min-h-screen bg-[#0A0A0B] text-slate-200 selection:bg-indigo-500/30">
       <SideBar />
 
-      <main className={`flex-1 flex flex-col transition-all duration-300 ${isOpen ? "ml-64" : "ml-20"}`}>
-        {/* Header */}
-        <header className="flex items-center justify-between px-6 py-4 bg-[#1b1b1b] border-b border-gray-700 relative z-50">
-          <div>
-            <h1 className="text-2xl font-bold">Mission Control</h1>
-            <p className="text-[10px] text-blue-500 font-bold uppercase tracking-widest">Role: {user?.role || "Developer"}</p>
+      <main className={`flex-1 flex flex-col transition-all duration-500 ease-in-out ${isOpen ? "ml-64" : "ml-20"}`}>
+        {/* Futuristic Header */}
+        <header className="flex items-center justify-between px-8 py-5 bg-[#0F0F12]/80 backdrop-blur-md border-b border-white/5 sticky top-0 z-[60]">
+          <div className="flex items-center gap-4">
+            <div className="p-2 bg-indigo-600 rounded-lg shadow-lg shadow-indigo-600/20">
+              <Terminal size={20} className="text-white" />
+            </div>
+            <div>
+              <h1 className="text-xl font-black tracking-tight text-white">MISSION CONTROL</h1>
+              <div className="flex items-center gap-2">
+                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                <p className="text-[10px] text-slate-400 font-bold uppercase tracking-[0.2em]">Agent: {user?.name?.split(' ')[0] || "Unknown"}</p>
+              </div>
+            </div>
           </div>
 
-          <div className="flex items-center gap-6">
+          <div className="flex items-center gap-4">
+            <div className="relative group hidden lg:block">
+              <Search className="absolute top-2.5 left-3 text-slate-500 group-focus-within:text-indigo-400 transition-colors" size={16} />
+              <input type="text" placeholder="Search repository..." className="pl-10 pr-4 py-2 w-64 rounded-xl bg-white/5 text-sm focus:outline-none focus:ring-1 focus:ring-indigo-500/50 border border-white/5 transition-all" />
+            </div>
+
             <div className="relative" ref={notifRef}>
-              <button onClick={() => setShowNotif(!showNotif)} className="relative p-2 text-gray-400 hover:text-white transition-colors">
-                <Bell size={22} />
+              <button onClick={() => setShowNotif(!showNotif)} className={`relative p-2.5 rounded-xl transition-all ${showNotif ? 'bg-indigo-600 text-white' : 'bg-white/5 text-slate-400 hover:text-white'}`}>
+                <Bell size={20} />
                 {notifications.length > 0 && (
-                  <span className="absolute top-1 right-1 w-4 h-4 bg-red-600 text-white text-[10px] flex items-center justify-center rounded-full border-2 border-[#1b1b1b] animate-bounce">
+                  <span className="absolute -top-1 -right-1 w-5 h-5 bg-rose-600 text-white text-[10px] font-bold flex items-center justify-center rounded-full border-2 border-[#0A0A0B]">
                     {notifications.length}
                   </span>
                 )}
               </button>
 
               {showNotif && (
-                <div className="absolute right-0 mt-3 w-80 bg-[#1f1f1f] border border-gray-700 rounded-xl shadow-2xl overflow-hidden animate-in fade-in slide-in-from-top-2">
-                  <div className="p-4 border-b border-gray-700 bg-[#252525]"><h3 className="text-sm font-bold">New Task Invitations</h3></div>
-                  <div className="max-h-96 overflow-y-auto">
+                <div className="absolute right-0 mt-4 w-80 bg-[#16161A] border border-white/10 rounded-2xl shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+                  <div className="p-4 border-b border-white/5 bg-white/[0.02] flex justify-between items-center">
+                    <h3 className="text-xs font-black uppercase tracking-widest text-indigo-400">Incoming Requests</h3>
+                    <span className="text-[10px] bg-indigo-500/10 text-indigo-400 px-2 py-0.5 rounded-full font-bold">{notifications.length} New</span>
+                  </div>
+                  <div className="max-h-[400px] overflow-y-auto">
                     {notifications.length === 0 ? (
-                      <div className="p-8 text-center text-gray-500 text-xs italic">No new tasks for now.</div>
+                      <div className="p-10 text-center flex flex-col items-center gap-3">
+                        <Coffee size={32} className="text-slate-700" />
+                        <p className="text-xs text-slate-500 italic font-medium">Queue empty. Time for coffee?</p>
+                      </div>
                     ) : (
                       notifications.map((notif) => (
-                        <div key={notif._id} className="p-4 border-b border-gray-800 hover:bg-white/[0.02]">
-                          <p className="text-xs font-bold text-blue-400 mb-1">{notif.title}</p>
-                          <div className="flex gap-2 mt-3">
-                            <button onClick={() => handleResponse(notif._id, true)} className="flex-1 flex items-center justify-center gap-1 bg-green-600/20 text-green-500 text-[10px] font-bold py-1.5 rounded hover:bg-green-600 hover:text-white transition-all"><Check size={12} /> ACCEPT</button>
-                            <button onClick={() => handleResponse(notif._id, false)} className="flex-1 flex items-center justify-center gap-1 bg-red-600/20 text-red-500 text-[10px] font-bold py-1.5 rounded hover:bg-red-600 hover:text-white transition-all"><X size={12} /> REJECT</button>
+                        <div key={notif._id} className="p-4 border-b border-white/5 hover:bg-white/[0.03] transition-colors group">
+                          <p className="text-xs font-bold text-slate-200 group-hover:text-indigo-400 transition-colors">{notif.title}</p>
+                          <div className="flex gap-2 mt-4">
+                            <button onClick={() => handleResponse(notif._id, true)} className="flex-1 flex items-center justify-center gap-1.5 bg-emerald-500/10 text-emerald-500 text-[10px] font-black py-2 rounded-lg hover:bg-emerald-500 hover:text-white transition-all underline-offset-4 tracking-tighter uppercase">
+                              <Check size={12} strokeWidth={3} /> Commit
+                            </button>
+                            <button onClick={() => handleResponse(notif._id, false)} className="flex-1 flex items-center justify-center gap-1.5 bg-rose-500/10 text-rose-500 text-[10px] font-black py-2 rounded-lg hover:bg-rose-500 hover:text-white transition-all tracking-tighter uppercase">
+                              <X size={12} strokeWidth={3} /> Drop
+                            </button>
                           </div>
                         </div>
                       ))
@@ -1175,165 +1516,219 @@ const DeveloperDashboard = () => {
                 </div>
               )}
             </div>
-            <div className="relative hidden md:block">
-              <Search className="absolute top-2.5 left-2.5 text-gray-400" size={18} />
-              <input type="text" placeholder="Search tasks..." className="pl-9 pr-4 py-2 rounded-md bg-[#2a2a2a] text-sm focus:outline-none border border-white/5" />
-            </div>
           </div>
         </header>
 
-        <div className="flex flex-1 overflow-hidden">
-          {/* Main Dashboard Area */}
-          <div className="flex-1 p-6 overflow-y-auto custom-scrollbar">
-            {/* Top Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+        <div className="flex flex-1 overflow-hidden px-8 py-6 gap-8">
+          {/* Main Content */}
+          <div className="flex-1 flex flex-col gap-8 overflow-y-auto pr-2 custom-scrollbar">
+            
+            {/* Stats Grid */}
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-5">
               {topCards.map((card, i) => (
-                <div key={i} className="bg-[#1b1b1b] rounded-xl p-5 border border-white/5 group hover:bg-white/[0.02] transition-all shadow-lg">
-                  <div className="mb-3 p-2 w-fit bg-white/5 rounded-lg group-hover:bg-white/10 transition-colors">{card.icon}</div>
-                  <h2 className="font-semibold text-gray-200">{card.title}</h2>
-                  <p className="text-sm text-gray-400">{card.subtitle}</p>
-                  <div className="mt-2 text-xs font-bold text-blue-500 tracking-tighter">{card.status}</div>
+                <div key={i} className={`relative overflow-hidden bg-[#16161A] rounded-2xl p-6 border border-white/5 group hover:border-indigo-500/30 transition-all duration-300 shadow-xl shadow-black/20 hover:-translate-y-1`}>
+                  <div className={`absolute top-0 right-0 w-24 h-24 bg-gradient-to-br ${card.color} blur-3xl opacity-50 group-hover:opacity-100 transition-opacity`}></div>
+                  <div className="relative z-10">
+                    <div className="mb-4 p-2.5 w-fit bg-white/5 rounded-xl border border-white/10 group-hover:scale-110 transition-transform">
+                      {React.cloneElement(card.icon, { size: 20 })}
+                    </div>
+                    <h2 className="text-xs font-black text-slate-500 uppercase tracking-widest">{card.title}</h2>
+                    <p className="text-lg font-bold text-white mt-1 group-hover:text-indigo-400 transition-colors">{card.subtitle}</p>
+                    <div className="mt-4 flex items-center justify-between">
+                        <span className="text-[10px] font-bold py-1 px-2 bg-white/5 rounded-md text-slate-300">{card.status}</span>
+                        <ChevronRight size={14} className="text-slate-600 group-hover:text-white transition-all transform group-hover:translate-x-1" />
+                    </div>
+                  </div>
                 </div>
               ))}
             </div>
 
-            {/* Calendar View */}
-            <div className="p-6 bg-[#1b1b1b] rounded-xl shadow-lg border border-white/5">
-              <div className="flex justify-between items-center mb-6">
-                <h2 className="text-lg font-bold flex items-center gap-2"><Calendar size={20} className="text-blue-500" /> Sprint Timeline</h2>
+            {/* Calendar / Timeline Section */}
+            <div className="bg-[#16161A] rounded-3xl shadow-2xl border border-white/5 overflow-hidden">
+              <div className="p-8 border-b border-white/5 flex justify-between items-center bg-white/[0.01]">
                 <div className="flex items-center gap-3">
-                  <button onClick={prevMonth} className="p-1.5 rounded-md hover:bg-[#2a2a2a] bg-[#121212] border border-white/5"><ChevronLeft size={18}/></button>
-                  <span className="text-sm font-medium w-32 text-center text-gray-300">{monthYear}</span>
-                  <button onClick={nextMonth} className="p-1.5 rounded-md hover:bg-[#2a2a2a] bg-[#121212] border border-white/5"><ChevronRight size={18}/></button>
+                  <div className="w-10 h-10 bg-indigo-500/10 rounded-xl flex items-center justify-center">
+                    <Calendar size={20} className="text-indigo-500" />
+                  </div>
+                  <div>
+                    <h2 className="text-lg font-bold text-white">Sprint Timeline</h2>
+                    <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">Temporal Task Mapping</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-1 bg-black/40 p-1.5 rounded-xl border border-white/5">
+                  <button onClick={prevMonth} className="p-2 rounded-lg hover:bg-white/5 text-slate-400 hover:text-white transition-all"><ChevronLeft size={18}/></button>
+                  <span className="text-xs font-black w-28 text-center text-slate-200 uppercase tracking-tighter">{monthYear}</span>
+                  <button onClick={nextMonth} className="p-2 rounded-lg hover:bg-white/5 text-slate-400 hover:text-white transition-all"><ChevronRight size={18}/></button>
                 </div>
               </div>
 
-              <div className="grid grid-cols-7 text-center text-[10px] mb-3 font-bold text-gray-500 uppercase tracking-widest">
-                {daysOfWeek.map((day) => <div key={day}>{day}</div>)}
-              </div>
+              <div className="p-8">
+                <div className="grid grid-cols-7 text-center text-[10px] mb-6 font-black text-slate-600 uppercase tracking-[0.2em]">
+                  {daysOfWeek.map((day) => <div key={day}>{day}</div>)}
+                </div>
 
-              <div className="grid grid-cols-7 gap-2">
-                {Array.from({ length: startDay }).map((_, i) => <div key={`empty-${i}`} />)}
-                {Array.from({ length: daysInMonth }, (_, i) => {
-                  const day = i + 1;
-                  const dateObj = new Date(currentMonth.getFullYear(), currentMonth.getMonth(), day);
-                  const dayEvents = dbData?.monthlyTasks?.filter(t => new Date(t.created_at).toDateString() === dateObj.toDateString());
-                  const isToday = new Date().toDateString() === dateObj.toDateString();
+                <div className="grid grid-cols-7 gap-3">
+                  {Array.from({ length: startDay }).map((_, i) => <div key={`empty-${i}`} className="aspect-square opacity-20" />)}
+                  {Array.from({ length: daysInMonth }, (_, i) => {
+                    const day = i + 1;
+                    const dateObj = new Date(currentMonth.getFullYear(), currentMonth.getMonth(), day);
+                    const dayEvents = dbData?.monthlyTasks?.filter(t => new Date(t.created_at).toDateString() === dateObj.toDateString());
+                    const isToday = new Date().toDateString() === dateObj.toDateString();
 
-                  return (
-                    <div key={i} className={`min-h-[100px] p-2 rounded-lg border transition-all ${isToday ? "border-blue-500 bg-blue-500/5 shadow-inner" : "border-white/5 bg-[#232323]"}`}>
-                      <span className={`text-xs font-bold ${isToday ? "text-blue-400" : "text-gray-600"}`}>{day}</span>
-                      <div className="mt-1 space-y-1">
-                        {dayEvents?.map((event, idx) => (
-                          <div 
-                            key={idx} 
-                            onClick={() => handleToggleFocus(event._id, event.focus)}
-                            className={`p-1.5 text-[9px] font-bold rounded cursor-pointer truncate transition-all border-l-2
-                              ${event.focus === 'yes' ? 'bg-blue-600 text-white border-white scale-105 shadow-md' : 'bg-blue-600/10 border-blue-500/50 text-blue-100 hover:bg-blue-600/20'}`}
-                          >
-                            {event.title}
-                          </div>
-                        ))}
+                    return (
+                      <div key={i} className={`min-h-[120px] p-3 rounded-2xl border transition-all duration-300 relative group
+                        ${isToday ? "border-indigo-500 bg-indigo-500/[0.03] shadow-[0_0_20px_rgba(99,102,241,0.1)]" : "border-white/5 bg-[#1C1C21] hover:bg-[#23232A]"}`}>
+                        <span className={`text-xs font-black ${isToday ? "text-indigo-400" : "text-slate-700"}`}>{day.toString().padStart(2, '0')}</span>
+                        
+                        <div className="mt-2 space-y-1.5">
+                          {dayEvents?.map((event, idx) => (
+                            <div 
+                              key={idx} 
+                              onClick={() => handleToggleFocus(event._id, event.focus)}
+                              className={`group/item p-2 text-[9px] font-black rounded-lg cursor-pointer truncate transition-all border-l-4 shadow-sm
+                                ${event.focus === 'yes' 
+                                  ? 'bg-indigo-600 text-white border-white scale-105 z-10 ring-4 ring-indigo-500/20' 
+                                  : 'bg-white/5 border-indigo-500/30 text-slate-300 hover:bg-white/10 hover:border-indigo-400'}`}
+                            >
+                              <div className="flex items-center gap-1">
+                                {event.focus === 'yes' && <Zap size={8} className="fill-current animate-pulse" />}
+                                {event.title}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                        {dayEvents?.length > 2 && <div className="absolute bottom-2 right-2 text-[8px] font-bold text-slate-500">+{dayEvents.length - 2} more</div>}
                       </div>
-                    </div>
-                  );
-                })}
+                    );
+                  })}
+                </div>
               </div>
             </div>
           </div>
 
-          {/* Right Sidebar */}
-          <aside className="w-80 bg-[#1b1b1b] border-l border-gray-700 p-6 hidden xl:flex flex-col gap-8 overflow-y-auto custom-scrollbar">
-            {/* Focus Task Section */}
-            <div>
-              <div className="flex justify-between items-center mb-4">
-                <h3 className="text-[10px] font-black text-gray-500 uppercase tracking-widest">Focus Task</h3>
-                {dbData?.stats?.focusTask && <span className="text-[9px] font-bold text-blue-500 px-2 py-0.5 bg-blue-500/10 rounded-full animate-pulse">ACTIVE</span>}
+          {/* Right Gutter - Command Center */}
+          <aside className="w-[320px] hidden xl:flex flex-col gap-6 overflow-y-auto custom-scrollbar">
+            
+            {/* Focus Task - Glassmorphic Card */}
+            <section className="bg-gradient-to-b from-indigo-600/20 to-transparent rounded-3xl border border-indigo-500/20 p-6 backdrop-blur-sm">
+              <div className="flex justify-between items-center mb-6">
+                <h3 className="text-[10px] font-black text-indigo-400 uppercase tracking-widest">Current Frequency</h3>
+                {dbData?.stats?.focusTask && (
+                   <span className="flex items-center gap-1.5 text-[9px] font-black text-white px-2 py-1 bg-indigo-500 rounded-full shadow-lg shadow-indigo-500/40">
+                      <span className="w-1.5 h-1.5 bg-white rounded-full animate-ping"></span>
+                      SYNCING
+                   </span>
+                )}
               </div>
               
               {dbData?.stats?.focusTask ? (
-                <div className="bg-[#232323] p-5 rounded-2xl border border-white/5 shadow-xl relative group">
+                <div className="relative group">
                   <button 
                     onClick={() => handleToggleFocus(dbData.stats.focusTask._id, "yes")}
-                    className="absolute top-2 right-2 text-gray-600 hover:text-red-500 transition-colors"
+                    className="absolute -top-1 -right-1 p-1 bg-white/5 rounded-full text-slate-500 hover:text-rose-500 hover:bg-rose-500/10 transition-all z-20"
                   >
-                    <XCircle size={16} />
+                    <XCircle size={18} />
                   </button>
-                  <p className="text-sm font-bold text-white mb-1 pr-4">{dbData.stats.focusTask.title}</p>
-                  <p className="text-[10px] text-gray-500 mb-4 flex items-center gap-1"><Clock size={10} /> Active Session</p>
-                  
-                  <div className="space-y-2">
-                    <div className="w-full bg-gray-800 h-1.5 rounded-full overflow-hidden">
-                      <div className="bg-blue-500 h-full shadow-[0_0_8px_rgba(59,130,246,0.5)] transition-all duration-1000" style={{ width: `${dbData.stats.focusTask.percent_complete}%` }} />
+                  <div className="space-y-4">
+                    <p className="text-sm font-black text-white leading-tight pr-6">{dbData.stats.focusTask.title}</p>
+                    <div className="flex items-center gap-4 text-[10px] text-slate-400 font-bold uppercase italic">
+                       <span className="flex items-center gap-1"><Clock size={12}/> {dbData.stats.focusTask.priority || "High"}</span>
+                       <span className="flex items-center gap-1 text-indigo-400"><Activity size={12}/> Online</span>
                     </div>
-                    <div className="flex justify-between items-center text-[9px] font-bold">
-                      <span className="text-gray-500 uppercase">Progress</span>
-                      <span className="text-blue-400">{dbData.stats.focusTask.percent_complete}%</span>
+                    
+                    <div className="space-y-2 pt-2">
+                      <div className="flex justify-between text-[10px] font-black mb-1.5">
+                        <span className="text-slate-500 tracking-widest">EXECUTION</span>
+                        <span className="text-indigo-400">{dbData.stats.focusTask.percent_complete}%</span>
+                      </div>
+                      <div className="w-full bg-white/5 h-2 rounded-full overflow-hidden border border-white/5">
+                        <div className="bg-gradient-to-r from-indigo-500 to-cyan-400 h-full shadow-[0_0_15px_rgba(99,102,241,0.6)] transition-all duration-1000" style={{ width: `${dbData.stats.focusTask.percent_complete}%` }} />
+                      </div>
                     </div>
                   </div>
                 </div>
               ) : (
-                <div className="text-center py-10 border-2 border-dashed border-white/5 rounded-2xl bg-white/[0.01]">
-                  <p className="text-xs text-gray-600 italic">No task in focus</p>
-                  <p className="text-[9px] text-gray-700 mt-1 uppercase font-bold tracking-tighter">Select from calendar</p>
+                <div className="py-8 flex flex-col items-center justify-center border-2 border-dashed border-white/5 rounded-2xl bg-white/[0.02]">
+                  <div className="w-12 h-12 rounded-full bg-white/5 flex items-center justify-center mb-3">
+                    <Zap size={20} className="text-slate-600" />
+                  </div>
+                  <p className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Ready for focus</p>
                 </div>
               )}
-            </div>
+            </section>
 
-            {/* PR Monitor (Mock Data as requested) */}
-            <div>
-              <h3 className="text-[10px] font-black text-gray-500 uppercase tracking-widest mb-4">Pull Requests</h3>
+            {/* PR Monitor */}
+            <section className="bg-[#16161A] rounded-3xl p-6 border border-white/5">
+              <h3 className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-6 flex items-center justify-between">
+                Review Queue <ExternalLink size={12} className="cursor-pointer hover:text-white" />
+              </h3>
               <div className="space-y-3">
                 {[
-                  { id: 'PR-102', title: 'Auth Fix', status: 'Reviewing', color: 'text-yellow-500' },
-                  { id: 'PR-105', title: 'Nav UI', status: 'Approved', color: 'text-green-500' }
+                  { id: 'PR-102', title: 'Auth Logic Refactor', status: 'In Review', color: 'bg-amber-500', text: 'text-amber-500' },
+                  { id: 'PR-105', title: 'Core UI Theme Engine', status: 'Approved', color: 'bg-emerald-500', text: 'text-emerald-500' }
                 ].map((pr) => (
-                  <div key={pr.id} className="group flex items-center justify-between p-3 bg-[#232323] hover:bg-[#2a2a2a] rounded-xl border border-white/5 transition-colors">
-                    <div>
-                      <p className="text-[11px] font-bold text-gray-200 group-hover:text-blue-400">{pr.id}</p>
-                      <p className="text-[10px] text-gray-500">{pr.title}</p>
+                  <div key={pr.id} className="group flex items-center justify-between p-4 bg-white/[0.03] hover:bg-white/[0.06] rounded-2xl border border-white/5 transition-all cursor-pointer">
+                    <div className="flex items-center gap-3">
+                      <div className={`w-1.5 h-8 ${pr.color} rounded-full`}></div>
+                      <div>
+                        <p className="text-[11px] font-black text-white group-hover:text-indigo-400 transition-colors uppercase tracking-tighter">{pr.id}</p>
+                        <p className="text-[10px] text-slate-500 font-medium truncate w-32">{pr.title}</p>
+                      </div>
                     </div>
-                    <span className={`text-[9px] font-black uppercase ${pr.color}`}>{pr.status}</span>
+                    <span className={`text-[8px] font-black uppercase px-2 py-1 bg-white/5 rounded-md ${pr.text}`}>{pr.status}</span>
                   </div>
                 ))}
               </div>
-            </div>
+            </section>
 
-            {/* Utilities */}
-            <div className="mt-4">
-              <h3 className="text-[10px] font-black text-gray-500 uppercase tracking-widest mb-4">Utilities</h3>
-              <div className="grid grid-cols-2 gap-2">
-                <NavLink to="/TeamMembers" className="flex flex-col items-center justify-center p-3 bg-white/5 hover:bg-white/10 rounded-xl border border-white/5 transition-all group">
-                  <MessageSquare size={16} className="text-gray-400 group-hover:text-blue-400 mb-1" />
-                  <span className="text-[9px] font-bold text-gray-400 group-hover:text-gray-200 uppercase">Chat</span>
+            {/* Navigation Utilities */}
+            <section className="grid grid-cols-2 gap-3">
+                <NavLink to="/TeamMembers" className="flex flex-col items-center gap-3 p-5 bg-[#16161A] hover:bg-indigo-600 rounded-3xl border border-white/5 transition-all group shadow-lg">
+                  <div className="p-3 bg-white/5 rounded-2xl group-hover:bg-white/20 transition-colors">
+                    <MessageSquare size={20} className="text-slate-400 group-hover:text-white" />
+                  </div>
+                  <span className="text-[10px] font-black text-slate-500 group-hover:text-white uppercase tracking-widest">Comm Link</span>
                 </NavLink>
-                <button className="flex flex-col items-center justify-center p-3 bg-white/5 hover:bg-white/10 rounded-xl border border-white/5 transition-all group">
-                  <Layout size={16} className="text-gray-400 group-hover:text-purple-400 mb-1" />
-                  <span className="text-[9px] font-bold text-gray-400 group-hover:text-gray-200 uppercase">Docs</span>
+                <button className="flex flex-col items-center gap-3 p-5 bg-[#16161A] hover:bg-purple-600 rounded-3xl border border-white/5 transition-all group shadow-lg">
+                  <div className="p-3 bg-white/5 rounded-2xl group-hover:bg-white/20 transition-colors">
+                    <Layout size={20} className="text-slate-400 group-hover:text-white" />
+                  </div>
+                  <span className="text-[10px] font-black text-slate-500 group-hover:text-white uppercase tracking-widest">Manifesto</span>
                 </button>
-              </div>
-            </div>
+            </section>
 
-            {/* Sticky Bottom Standup */}
-            <div className="mt-auto bg-gradient-to-br from-indigo-600 to-blue-700 p-5 rounded-2xl shadow-xl relative overflow-hidden group">
-              <Zap className="absolute -right-4 -top-4 w-20 h-20 text-white/10 rotate-12 group-hover:scale-110 transition-transform" />
-              <div className="relative z-10">
-                <div className="flex items-center gap-2 mb-2">
-                  <CheckCircle size={16} className="text-blue-200" />
-                  <p className="text-xs font-black text-white uppercase">Standup Ready</p>
+            {/* AI Assistant Standup */}
+            <section className="mt-auto relative group">
+              <div className="absolute -inset-1 bg-gradient-to-r from-indigo-500 to-purple-600 rounded-[2rem] blur opacity-25 group-hover:opacity-50 transition duration-1000 group-hover:duration-200"></div>
+              <div className="relative bg-[#16161A] p-6 rounded-[2rem] border border-white/10 overflow-hidden">
+                <div className="relative z-10">
+                  <div className="flex items-center gap-3 mb-4">
+                    <div className="w-8 h-8 rounded-full bg-indigo-500 flex items-center justify-center">
+                       <Activity size={14} className="text-white" />
+                    </div>
+                    <p className="text-[10px] font-black text-white uppercase tracking-widest">Neural Standup</p>
+                  </div>
+                  <p className="text-[10px] text-slate-400 leading-relaxed mb-6 font-medium italic">"I've analyzed your commit history and focus sessions. Your daily summary is compiled and ready for deployment."</p>
+                  <button className="w-full bg-indigo-600 hover:bg-indigo-500 text-white text-[10px] font-black py-3 rounded-xl uppercase tracking-[0.2em] transition-all shadow-lg shadow-indigo-600/30 flex items-center justify-center gap-2 group/btn">
+                    Deploy Update <Zap size={12} className="group-hover/btn:animate-bounce" />
+                  </button>
                 </div>
-                <p className="text-[10px] text-blue-100/80 leading-relaxed mb-4">We've compiled your activity into a draft update.</p>
-                <button className="w-full bg-white text-blue-700 text-[10px] font-black py-2.5 rounded-lg uppercase tracking-widest hover:bg-blue-50 transition-colors">Sync with Bot</button>
+                <Terminal className="absolute -right-6 -bottom-6 w-24 h-24 text-white/[0.02] -rotate-12" />
               </div>
-            </div>
+            </section>
           </aside>
         </div>
       </main>
+      
+      {/* Global CSS for scrollbars */}
+      <style>{`
+        .custom-scrollbar::-webkit-scrollbar { width: 5px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.05); border-radius: 20px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: rgba(99,102,241,0.2); }
+      `}</style>
     </div>
   );
 };
 
 export default DeveloperDashboard;
-
-
-

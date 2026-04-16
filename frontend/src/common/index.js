@@ -98,7 +98,11 @@ const SummaryApi = {
     updateFocusTask: {
         url: `${backendDomain}/api/update-focus-task`,
         method: "post"
-    }
+    },
+    updateUser: {
+    url: `${backendDomain}/api/update-user`,
+    method: "post"
+}
 }
 
 

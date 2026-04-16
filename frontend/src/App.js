@@ -30,7 +30,7 @@ import CreateTeam from './pages/CreateTeam';
 import TeamMembers from './components/TeamMembers';
 import ScrumTeams from './components/ScrumTeams';
 import DeveloperDashboard from './pages/DeveloperDashboard';
-import STeamChat from './components/STeamChat';
+import SprintControl from './components/sprintControl';
 import SprintGeneration from './pages/SprintGenerator';
 import ReportGeneration from './pages/ReportGenerator';
 import ProjectTracking from './pages/ProjectTracking';
@@ -179,10 +179,10 @@ function App() {
       ),
     },
     {
-      path: '/STeamChat',
+      path: '/SprintControl',
       element: (
         <>
-          <STeamChat />
+          <SprintControl />
         </>
       ),
     },
