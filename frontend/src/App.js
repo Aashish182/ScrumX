@@ -195,9 +195,9 @@ function App() {
       ),
     },
     {
-      path: '/Performance',
+      path: '/Performance/:teamId',
       element: (
-        <>  
+        <>
           <Performance />
         </>
       ),

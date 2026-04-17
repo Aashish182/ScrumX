@@ -19,6 +19,10 @@ const sprintSchema = new mongoose.Schema({
     ref: 'teams',
     required: false
   },
+  subtasks: [{
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'subtasks' // Must match the name in your subtask model
+  }],
   start_date: {
     type: Date,
     required: true

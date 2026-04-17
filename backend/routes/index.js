@@ -27,6 +27,12 @@ const respondSubtaskController = require('../controller/respondSubtask');
 const getCurrentSprintController = require('../controller/currentSprint');
 const {getDeveloperDashboardData, updateFocusTask} = require('../controller/devDashboard');
 const userController = require('../controller/userController');
+const { getTeamPerformance } = require('../controller/performanceController');
+const sprintController = require('../controller/sprintController');
+const performanceCo = require('../controller/performanceCo');
+
+
+
 
 
 
@@ -57,6 +63,14 @@ router.post("/developer-dashboard", authToken,getDeveloperDashboardData);
 router.post("/update-focus-task", authToken, updateFocusTask);
 router.post("/update-user", authToken, userController.updateUser);
 router.get("/get-user-details", authToken, userController.getUserDetails);
+
+router.get("/team-performance/:teamId", getTeamPerformance);
+router.get("/sprints/all", sprintController.getAllSprintsWithSubtasks);
+
+// Updating assignments from the dropdown
+router.patch("/subtasks/update-team", sprintController.updateSubtaskTeam);
+router.get("/performance/:teamId", performanceCo.getTeamPerformance);
+
 
 
 module.exports = router;

@@ -61,6 +61,14 @@ const subTaskSchema = new mongoose.Schema({
     ref: 'tasks', 
     required: true
   },
+  sprint_id: { 
+    type: mongoose.Schema.Types.ObjectId, 
+    ref: 'sprints' 
+  }, 
+  team_id: { 
+    type: mongoose.Schema.Types.ObjectId, 
+    ref: 'teams' 
+  },
   assignee_id: { 
     type: mongoose.Schema.Types.ObjectId, 
     ref: 'user', 

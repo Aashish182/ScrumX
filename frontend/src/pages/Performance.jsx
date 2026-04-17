@@ -324,3 +324,5 @@ const InsightItem = ({ text, status }) => {
         </div>
     );
 };
+
+

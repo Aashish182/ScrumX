@@ -100,9 +100,28 @@ const SummaryApi = {
         method: "post"
     },
     updateUser: {
-    url: `${backendDomain}/api/update-user`,
-    method: "post"
-}
+        url: `${backendDomain}/api/update-user`,
+        method: "post"
+    },
+    teamPerformance : {
+        url : `${backendDomain}/api/team-performance`, 
+        method : 'get'
+    },
+    allSprints: {
+        url: `${backendDomain}/api/sprints/all`,
+        method: "get"
+    },
+
+    // 2. Update a subtask's team assignment
+    updateSubtaskTeam: {
+        url: `${backendDomain}/api/subtasks/update-team`,
+        method: "patch"
+    },
+    teamPerformance: {
+        url: `${backendDomain}/api/performance`, 
+        method: "get"
+    },
+
 }
 
 

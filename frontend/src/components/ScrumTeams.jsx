@@ -271,7 +271,7 @@ const ScrumTeams = () => {
                       </div>
 
                       <button
-                        onClick={() => navigate("/Performance")}
+                        onClick={() => navigate(`/Performance/${team._id}`)}
                         className="w-full group/btn flex items-center justify-center gap-3 bg-white/5 hover:bg-blue-600 border border-white/10 hover:border-blue-500 py-4 rounded-2xl text-sm font-bold transition-all duration-300 active:scale-95 shadow-xl hover:shadow-blue-900/20"
                       >
                         Analysis Report
