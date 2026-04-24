@@ -7,7 +7,7 @@ const assignSubtasksController = async (req, res) => {
 
         const data = assignments.map(item => ({
             ...item,
-            status: "Pending" // Custom status for the handshake
+            status: "Pending" 
         }));
 
         const result = await SubTask.insertMany(data);

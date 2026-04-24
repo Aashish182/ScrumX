@@ -1,3 +1,5 @@
+
+
 import os
 import re
 os.environ["CUDA_VISIBLE_DEVICES"] = ""  # FORCE CPU
@@ -27,7 +29,7 @@ load_dotenv()
 # MongoDB Setup (SINGLE SOURCE)
 # ----------------------------------------------------
 client = MongoClient("mongodb://localhost:27017")
-db = client["scrumbotdb"]
+db = client["SCRUMX"]
 DEV_ID = ObjectId("6902377289b2152bb6ffbb84")
 developers_col = db["developers"]
 projects_col = db["projects"]
@@ -329,7 +331,7 @@ def generate_sprint():
             "project_id": ObjectId(project_id) if project_id else None,
             "developer_id": ObjectId(developer_id) if developer_id else None,
             "status": "Active",
-            "created_at": datetime.datetime.utcnow()
+            "created_at": datetime.utcnow()
         }
         sprint_result = db.sprints.insert_one(sprint_doc)
         sprint_id = sprint_result.inserted_id
@@ -368,8 +370,8 @@ def generate_sprint():
                     "estimated_hours": role_info['default_hours'],           # Mock AI estimation
                     "actual_hours": 0,
                     "percent_complete": 0,
-                    "created_at": datetime.datetime.utcnow(),
-                    "updated_at": datetime.datetime.utcnow()
+                    "created_at": datetime.utcnow(),
+                    "updated_at": datetime.utcnow()
                 }
                 subtask_result = db.subtasks.insert_one(subtask_doc)
                 
