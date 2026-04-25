@@ -61,6 +61,60 @@
 //     }
 // };
 
+// // module.exports = getCurrentSprintController;
+// const SubTask = require("../models/subtasksModel");
+// const Task = require("../models/tasksModel");
+// const Story = require("../models/userstoriesModel");
+// const Sprint = require("../models/sprintModel");
+
+// const getCurrentSprintController = async (req, res) => {
+//     try {
+//         const userId = req.userId || req.query.userId;
+
+//         // 1. Fetch ALL subtasks for this user to calculate accurate metrics first
+//         const allUserSubtasks = await SubTask.find({ assignee_id: userId });
+
+//         if (!allUserSubtasks.length) {
+//             return res.status(200).json({ success: true, data: null });
+//         }
+
+//         // 2. Filter out "Done" tasks for the "Active Work" list
+//         const activeSubtasks = allUserSubtasks.filter(task => task.status !== "Done");
+
+//         // 3. Resolve the Sprint via the Task -> Story chain
+//         const taskIds = allUserSubtasks.map(st => st.task_id);
+//         const tasks = await Task.find({ _id: { $in: taskIds } });
+//         const storyIds = tasks.map(t => t.story_id);
+//         const stories = await Story.find({ _id: { $in: storyIds } });
+        
+//         const sprintId = stories[0]?.sprint_id;
+//         const activeSprint = await Sprint.findById(sprintId);
+
+//         // 4. Metrics calculation (Total vs Completed)
+//         const totalCount = allUserSubtasks.length;
+//         const completedCount = allUserSubtasks.filter(s => s.status === "Done").length;
+//         const progressPercent = totalCount > 0 ? Math.round((completedCount / totalCount) * 100) : 0;
+
+//         res.status(200).json({
+//             success: true,
+//             data: {
+//                 sprint: activeSprint,
+//                 subtasks: activeSubtasks, // Only returns Pending/To Do/In Progress
+//                 metrics: { 
+//                     total: totalCount, 
+//                     remaining: activeSubtasks.length,
+//                     completed: completedCount, 
+//                     progress: progressPercent 
+//                 }
+//             }
+//         });
+
+//     } catch (err) {
+//         console.error(err);
+//         res.status(500).json({ success: false, message: "Server Error" });
+//     }
+// };
+
 // module.exports = getCurrentSprintController;
 const SubTask = require("../models/subtasksModel");
 const Task = require("../models/tasksModel");
@@ -71,47 +125,88 @@ const getCurrentSprintController = async (req, res) => {
     try {
         const userId = req.userId || req.query.userId;
 
-        // 1. Fetch ALL subtasks for this user to calculate accurate metrics first
-        const allUserSubtasks = await SubTask.find({ assignee_id: userId });
+        // 1. Get subtasks
+        const subtasks = await SubTask.find({ assignee_id: userId });
 
-        if (!allUserSubtasks.length) {
+        if (!subtasks.length) {
             return res.status(200).json({ success: true, data: null });
         }
 
-        // 2. Filter out "Done" tasks for the "Active Work" list
-        const activeSubtasks = allUserSubtasks.filter(task => task.status !== "Done");
+        // 2. Get related tasks (safe mapping)
+        const taskIds = [...new Set(subtasks.map(s => s.task_id).filter(Boolean))];
 
-        // 3. Resolve the Sprint via the Task -> Story chain
-        const taskIds = allUserSubtasks.map(st => st.task_id);
         const tasks = await Task.find({ _id: { $in: taskIds } });
-        const storyIds = tasks.map(t => t.story_id);
+
+        if (!tasks.length) {
+            return res.status(200).json({ success: true, data: null });
+        }
+
+        // 3. Get stories
+        const storyIds = [...new Set(tasks.map(t => t.story_id).filter(Boolean))];
+
         const stories = await Story.find({ _id: { $in: storyIds } });
-        
+
+        if (!stories.length) {
+            return res.status(200).json({ success: true, data: null });
+        }
+
+        // 4. Get sprint
         const sprintId = stories[0]?.sprint_id;
-        const activeSprint = await Sprint.findById(sprintId);
+        const sprint = await Sprint.findById(sprintId);
 
-        // 4. Metrics calculation (Total vs Completed)
-        const totalCount = allUserSubtasks.length;
-        const completedCount = allUserSubtasks.filter(s => s.status === "Done").length;
-        const progressPercent = totalCount > 0 ? Math.round((completedCount / totalCount) * 100) : 0;
+        if (!sprint) {
+            return res.status(200).json({ success: true, data: null });
+        }
 
-        res.status(200).json({
+        // 5. Metrics calculation
+        const total = subtasks.length;
+        const done = subtasks.filter(s => s.status === "Done").length;
+        const remaining = total - done;
+
+        const totalHours = subtasks.reduce(
+            (sum, s) => sum + Number(s.estimated_hours || 0),
+            0
+        );
+
+        const completedHours = subtasks
+            .filter(s => s.status === "Done")
+            .reduce((sum, s) => sum + Number(s.estimated_hours || 0), 0);
+
+        const progress = total ? Math.round((done / total) * 100) : 0;
+
+        // 6. Active subtasks sorted (important for UI)
+        const activeSubtasks = subtasks
+            .filter(s => s.status !== "Done")
+            .sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+
+        return res.status(200).json({
             success: true,
             data: {
-                sprint: activeSprint,
-                subtasks: activeSubtasks, // Only returns Pending/To Do/In Progress
-                metrics: { 
-                    total: totalCount, 
-                    remaining: activeSubtasks.length,
-                    completed: completedCount, 
-                    progress: progressPercent 
+                sprint: {
+                    _id: sprint._id,
+                    name: sprint.name,
+                    goal: sprint.goal,
+                    start_date: sprint.start_date,
+                    end_date: sprint.end_date
+                },
+                subtasks: activeSubtasks,
+                metrics: {
+                    total,
+                    done,
+                    remaining,
+                    progress,
+                    totalHours,
+                    completedHours
                 }
             }
         });
 
     } catch (err) {
         console.error(err);
-        res.status(500).json({ success: false, message: "Server Error" });
+        return res.status(500).json({
+            success: false,
+            message: "Server Error"
+        });
     }
 };
 

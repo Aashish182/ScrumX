@@ -1,7 +1,7 @@
 import json, re
 from flask import Flask, request, jsonify
 from flask_cors import CORS
-from datetime import datetime, date
+from datetime import datetime, date, timedelta
 from db_config import get_coll, to_oid
 from langchain_huggingface import HuggingFaceEndpoint, ChatHuggingFace
 from langchain_core.prompts import PromptTemplate
@@ -14,7 +14,7 @@ model = ChatHuggingFace(llm=llm)
 
 SPRINT_PROMPT = PromptTemplate(
     input_variables=["stories"],
-    template="You are an Agile Scrum AI. Break these stories: {stories} into Tasks and Subtasks. Output ONLY valid JSON with sprint_name, sprint_goal, and stories (containing tasks and subtasks)."
+    template="You are an Agile Scrum AI. Break these stories: {stories} into Tasks and Subtasks. Output ONLY valid JSON with sprint_name, sprint_goal, estimated_hours and stories (containing tasks and subtasks)."
 )
 
 @app.route("/generate_sprint", methods=["POST"])
@@ -36,6 +36,8 @@ def generate_sprint():
             "goal": sprint_data["sprint_goal"],
             "project_id": to_oid(data.get("project_id")),
             "created_by": dev_id,
+            "start_date": datetime.utcnow().date(),
+            "end_date":datetime.utcnow().date() + timedelta(days=14), # Default 2-week sprint   
             "status": "Active",
             "created_at": datetime.utcnow()
         }).inserted_id
@@ -61,7 +63,7 @@ def generate_sprint():
                         "task_id": t_id,
                         "assignee_id": dev_id, # Dynamically assigned to requester
                         "status": "Pending",
-                        "estimated_hours": sub.get("estimated_hours", 0), # GET FROM LLM JSON
+                        "estimated_hours": sub.get("estimated_hours", 6), # GET FROM LLM JSON
                         "actual_hours": 0,
                         "percent_complete": 0,
                         "created_at": datetime.utcnow()

@@ -1195,7 +1195,7 @@ const ScrumMasterDashboard = () => {
                       <td className="px-8 py-5">
                         <div className="flex items-center gap-3">
                           <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-blue-600 to-purple-600 flex items-center justify-center text-[10px] font-bold text-white shadow-lg">
-                            {task.assigneeName?.[0] || "?"}
+                            {(task.assigneeName || "U")[0]}
                           </div>
                           <span className="font-bold text-gray-200">{task.assigneeName}</span>
                         </div>

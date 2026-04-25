@@ -1,71 +1,89 @@
-const sprintModels = require("../models/sprintModel");
-const subtaskModels = require("../models/subtasksModel");
+const Sprint = require("../models/sprintModel");
+const Story = require("../models/userstoriesModel");
+const Task = require("../models/tasksModel");
+const Subtask = require("../models/subtasksModel");
+const Team = require("../models/teamModel");
+const User = require("../models/userModel");
 
-const sprintController = {
-    getAllSprintsWithSubtasks: async (req, res) => {
-        try {
-            console.log("DEBUG: Fetching sprints from DB...");
+// GET ALL SPRINTS WITH SUBTASKS + TEAM INFO
+exports.getAllSprintsWithSubtasks = async (req, res) => {
+  try {
+    const sprints = await Sprint.find().sort({ createdAt: -1 });
 
-            // 1. We find sprints
-            // 2. We populate 'subtasks' (the field in your Sprint Schema)
-            // 3. We use .lean() to convert Mongoose docs to plain JS objects (Prevents 500 crashes)
-            const sprints = await sprintModels.find()
-                .populate({
-                    path: 'subtasks', 
-                    model: 'subtask' // CHECK: Does your subtaskModels.js use "subtask" or "subtasks"?
-                })
-                .sort({ createdAt: -1 })
-                .lean(); 
+    const result = [];
 
-            console.log(`DEBUG: Successfully found ${sprints?.length || 0} sprints`);
+    for (const sprint of sprints) {
+      const stories = await Story.find({ sprint_id: sprint._id });
+      const storyIds = stories.map(s => s._id);
 
-            res.status(200).json({
-                data: sprints,
-                message: "Sprints loaded",
-                success: true,
-                error: false
-            });
-        } catch (err) {
-            console.error("CRITICAL ERROR IN GET_ALL_SPRINTS:", err.stack);
-            res.status(500).json({
-                message: err.message || "Internal Server Error",
-                error: true,
-                success: false
-            });
-        }
-    },
+      const tasks = await Task.find({ story_id: { $in: storyIds } });
+      const taskIds = tasks.map(t => t._id);
 
-    updateSubtaskTeam: async (req, res) => {
-        try {
-            const { subtaskId, teamId } = req.body;
-            
-            if (!subtaskId) {
-                return res.status(400).json({ message: "Subtask ID required", error: true });
-            }
+      const subtasks = await Subtask.find({ task_id: { $in: taskIds } });
 
-            console.log(`DEBUG: Assigning subtask ${subtaskId} to team ${teamId}`);
+      // attach team + assignee details
+      const enrichedSubtasks = await Promise.all(
+        subtasks.map(async (st) => {
+          const team = st.team_id ? await Team.findById(st.team_id) : null;
+          const user = st.assignee_id ? await User.findById(st.assignee_id) : null;
 
-            const updated = await subtaskModels.findByIdAndUpdate(
-                subtaskId,
-                { team_id: teamId || null }, // Allow unassigning by passing empty value
-                { new: true }
-            );
+          return {
+            ...st.toObject(),
+            teamName: team?.teamName || "Unassigned Team",
+            teamMembers: team?.members || [],
+            assigneeName: user?.name || "Unassigned",
+          };
+        })
+      );
 
-            res.status(200).json({
-                data: updated,
-                message: "Assignment updated successfully",
-                success: true,
-                error: false
-            });
-        } catch (err) {
-            console.error("UPDATE ERROR:", err.message);
-            res.status(500).json({ 
-                message: err.message, 
-                error: true, 
-                success: false 
-            });
-        }
+      result.push({
+        ...sprint.toObject(),
+        subtasks: enrichedSubtasks,
+      });
     }
+
+    return res.status(200).json({
+      success: true,
+      data: result,
+      message: "Sprints loaded",
+    });
+
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({
+      success: false,
+      message: err.message,
+    });
+  }
 };
 
-module.exports = sprintController;
+
+// UPDATE TEAM + ASSIGNEE
+exports.updateSubtask = async (req, res) => {
+  try {
+    const { subtaskId, teamId, assigneeId } = req.body;
+
+    const updateData = {};
+
+    if (teamId !== undefined) updateData.team_id = teamId;
+    if (assigneeId !== undefined) updateData.assignee_id = assigneeId;
+
+    const updated = await Subtask.findByIdAndUpdate(
+      subtaskId,
+      updateData,
+      { new: true }
+    );
+
+    return res.status(200).json({
+      success: true,
+      data: updated,
+      message: "Subtask updated",
+    });
+
+  } catch (err) {
+    return res.status(500).json({
+      success: false,
+      message: err.message,
+    });
+  }
+};

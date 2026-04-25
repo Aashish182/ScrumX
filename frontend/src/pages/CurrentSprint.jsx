@@ -241,7 +241,7 @@ const CurrentSprint = () => {
                                                 <h3 className="text-lg font-bold text-slate-200 group-hover:text-white transition-colors">{task.title}</h3>
                                                 <div className="flex items-center gap-4 mt-2">
                                                     <span className="flex items-center gap-1.5 text-[10px] font-bold text-blue-500 bg-blue-500/10 px-2 py-0.5 rounded-md uppercase tracking-wider">
-                                                        <Timer size={12} /> {task.estimated_hours || 4}h Est.
+                                                        <Timer size={12} /> {task.estimated_hours || 0}h Estimate
                                                     </span>
                                                     <span className="text-[10px] text-slate-600 font-mono tracking-tighter">REF: {task._id.slice(-6)}</span>
                                                 </div>
