@@ -39,6 +39,8 @@ import MyTasks from './pages/MyTasks';
 import CurrentSprint from './pages/CurrentSprint';
 import ChatAnalysis from './components/chatAnalysis';
 
+import Standups from './components/standups';
+
 function App() {
   const dispatch = useDispatch();
   const user = useSelector((state) => state?.user?.user);
@@ -192,6 +194,14 @@ function App() {
       element: (
         <>  
           <Retrospectives />
+        </>
+      ),
+    },
+    {
+      path: '/standups',
+      element: (
+        <>  
+          <Standups />
         </>
       ),
     },

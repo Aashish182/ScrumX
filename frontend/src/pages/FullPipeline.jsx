@@ -242,7 +242,7 @@
 
 
 import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { NavLink, useNavigate } from "react-router-dom";
 import { useSelector } from "react-redux";
 import axios from "axios";
 import { MessageSquare, Send, History, CheckCircle2, AlertCircle } from "lucide-react";
@@ -342,12 +342,13 @@ export default function FullPipeline() {
                 </div>
 
                 <div className="mt-8 pt-6 border-t border-slate-700 flex flex-wrap gap-4">
-                  <button 
-                    onClick={() => navigate("/standups")}
-                    className="flex items-center gap-2 text-sm font-semibold text-blue-400 hover:text-blue-300 transition"
+                  <NavLink
+                    to="/standups"
+                    className="flex items-center gap-2 bg-blue-600 hover:bg-blue-500 text-white text-sm font-semibold px-5 py-3 rounded-xl transition-all shadow"
                   >
-                    <History size={16} /> View Standup History
-                  </button>
+                    <History size={16} />
+                    View Standup History
+                  </NavLink>
                 </div>
               </div>
             )}

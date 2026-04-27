@@ -32,7 +32,7 @@ const { getTeamPerformance } = require('../controller/performanceController');
 const getRetrospectiveController = require('../controller/retrospectiveController');
 const getTeamPerformanceAnalytics = require('../controller/teamPerformanceAnalytics');
 const { getChatAnalysis } = require('../controller/chatAnalysisController');
-
+const { getStandups } = require("../controller/standupController");
 
 
 
@@ -79,6 +79,7 @@ router.get("/retrospective/:teamId", getRetrospectiveController);
 
 router.get("/team/performance-analytics/:teamId", getTeamPerformanceAnalytics);
 router.get("/get-chat-analysis", getChatAnalysis);
+router.get("/standups", getStandups);
 
 
 
