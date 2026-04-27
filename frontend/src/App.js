@@ -37,6 +37,7 @@ import ProjectTracking from './pages/ProjectTracking';
 import FullPipeline from './pages/FullPipeline';
 import MyTasks from './pages/MyTasks';
 import CurrentSprint from './pages/CurrentSprint';
+import ChatAnalysis from './components/chatAnalysis';
 
 function App() {
   const dispatch = useDispatch();
@@ -263,6 +264,14 @@ function App() {
       element: (
         <>  
           <FullPipeline />
+        </>
+      ),
+    },
+    {
+      path: '/ChatAnalysis',
+      element: (
+        <>  
+          <ChatAnalysis />
         </>
       ),
     },

@@ -119,6 +119,8 @@ app.use((req, res) => {
 });
 
 const server = http.createServer(app);
+const startOverdueJob = require("./controller/overdueJob");
+startOverdueJob();
 
 const io = new Server(server, {
     cors: {

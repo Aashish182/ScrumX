@@ -29,6 +29,9 @@ const {getDeveloperDashboardData, updateFocusTask} = require('../controller/devD
 const userController = require('../controller/userController');
 const sprintController = require('../controller/sprintController');
 const { getTeamPerformance } = require('../controller/performanceController');
+const getRetrospectiveController = require('../controller/retrospectiveController');
+const getTeamPerformanceAnalytics = require('../controller/teamPerformanceAnalytics');
+const { getChatAnalysis } = require('../controller/chatAnalysisController');
 
 
 
@@ -72,6 +75,11 @@ router.patch("/update-subtask", sprintController.updateSubtask);
 
 
 router.get("/team/performance/:teamId", getTeamPerformance);
+router.get("/retrospective/:teamId", getRetrospectiveController);
+
+router.get("/team/performance-analytics/:teamId", getTeamPerformanceAnalytics);
+router.get("/get-chat-analysis", getChatAnalysis);
+
 
 
 module.exports = router;

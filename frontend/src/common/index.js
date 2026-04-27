@@ -23,7 +23,7 @@ const SummaryApi = {
         url: `${backendDomain}/api/AllUser`,
         method : "get"
     },
-    updateUser :{
+    update_User :{
         url: `${backendDomain}/api/UpdateUser`,
         method : "post"
     },
@@ -114,9 +114,20 @@ const SummaryApi = {
     updateSubtask: {
         url: `${backendDomain}/api/update-subtask`,
         method: "patch"
-    }
-    
-  
+    },
+    retrospective: {
+        url: `${backendDomain}/api/retrospective`,
+        method: "get"
+    },
+    teamPerformanceAnalytics: {
+        url: `${backendDomain}/api/team/performance-analytics`,
+        method: "get"
+    },
+    getChatAnalysis: {
+        url: `${backendDomain}/api/get-chat-analysis`,
+        method: "get",
+    },
+
 
 }
 

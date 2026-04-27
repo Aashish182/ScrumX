@@ -285,6 +285,7 @@ import { setUserDetails } from "../store/userSlice";
 import { toggleSidebar } from "../store/sidebarSlice";
 import SummaryApi from "../common";
 import { toast } from "react-toastify";
+import { RiChatAiFill } from "react-icons/ri";
 import {
   FaClipboardList, FaComments, FaUsers,
   FaChartLine, FaTasks,
@@ -372,6 +373,7 @@ const SideBar = () => {
               <SidebarLink to="/SprintControl" icon={<FaComments />} label="Sprint Control" isOpen={isOpen} />
               <SidebarLink to="/ScrumTeams" icon={<FaUsers />} label="Team Performance" isOpen={isOpen} />
               <SidebarLink to="/Retrospectives" icon={<FaHistory />} label="Retrospectives" isOpen={isOpen} />
+              <SidebarLink to="/ChatAnalysis" icon={<RiChatAiFill />} label="Chat Analysis" isOpen={isOpen} />
               <SidebarLink to="/ReportGenerator" icon={<FaChartLine />} label="Insights & Reports" isOpen={isOpen} />
               <SidebarLink to="/SprintGenerator" icon={<FaPlus />} label="Sprint Generation" isOpen={isOpen} />
             </>

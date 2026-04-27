@@ -9,7 +9,6 @@ exports.getTeamPerformance = async (req, res) => {
   try {
     const { teamId } = req.params;
 
-    // 1. Validate teamId
     if (!mongoose.Types.ObjectId.isValid(teamId)) {
       return res.status(400).json({
         success: false,
@@ -17,7 +16,6 @@ exports.getTeamPerformance = async (req, res) => {
       });
     }
 
-    // 2. Get team
     const team = await Team.findById(teamId);
     if (!team) {
       return res.status(404).json({
@@ -26,19 +24,33 @@ exports.getTeamPerformance = async (req, res) => {
       });
     }
 
-    // 3. Safe member IDs
+    // ✅ TEAM MEMBERS
     const memberIds = team.members
       .filter(id => mongoose.Types.ObjectId.isValid(id))
       .map(id => new mongoose.Types.ObjectId(id));
 
-    // 4. Fetch subtasks (FIXED)
+    // ✅ FETCH SUBTASKS
     const subtasks = await Subtask.aggregate([
       {
         $match: {
           assignee_id: { $in: memberIds },
         },
       },
-
+      {
+        $addFields: {
+          isOverdue: {
+            $and: [
+              { $in: ["$status", ["To Do", "In Progress"]] },
+              {
+                $lt: [
+                  "$created_at",
+                  new Date(Date.now() - 2 * 24 * 60 * 60 * 1000),
+                ],
+              },
+            ],
+          },
+        },
+      },
       {
         $lookup: {
           from: "users",
@@ -47,25 +59,25 @@ exports.getTeamPerformance = async (req, res) => {
           as: "assignee_info",
         },
       },
-
       {
         $unwind: {
           path: "$assignee_info",
           preserveNullAndEmptyArrays: true,
         },
       },
-
       {
         $project: {
           _id: 1,
           title: 1,
-          status: 1,
-
-          percent_complete: {
-            $ifNull: ["$percent_complete", 0],
+          status: {
+            $cond: {
+              if: "$isOverdue",
+              then: "Overdue",
+              else: "$status",
+            },
           },
+          percent_complete: { $ifNull: ["$percent_complete", 0] },
 
-          // ✅ FIX: force number conversion
           estimatedHours: {
             $convert: {
               input: "$estimated_hours",
@@ -79,25 +91,20 @@ exports.getTeamPerformance = async (req, res) => {
             $ifNull: ["$assignee_info.name", "Unassigned"],
           },
 
-          assignee_id: 1,
           task_id: 1,
         },
       },
     ]);
 
-    // 5. Sprint fetch (SAFE)
+    // ✅ FIND SPRINT
     let sprint = null;
 
     if (subtasks.length > 0) {
-      const taskIds = [
-        ...new Set(subtasks.map(s => s.task_id).filter(Boolean)),
-      ];
+      const taskIds = [...new Set(subtasks.map(s => s.task_id))];
 
       const tasks = await Task.find({ _id: { $in: taskIds } });
 
-      const storyIds = [
-        ...new Set(tasks.map(t => t.story_id).filter(Boolean)),
-      ];
+      const storyIds = [...new Set(tasks.map(t => t.story_id))];
 
       const stories = await Story.find({ _id: { $in: storyIds } });
 
@@ -109,19 +116,44 @@ exports.getTeamPerformance = async (req, res) => {
       }
     }
 
-    // 6. METRICS (FIXED SAFE REDUCE)
+    // =========================
+    // ✅ METRICS
+    // =========================
+
     const total = subtasks.length;
-    const done = subtasks.filter(s => s.status === "Done").length;
-    const blocked = subtasks.filter(s => s.status === "Blocked").length;
-    const remaining = total - done;
 
-    const totalHours = subtasks.reduce((sum, s) => {
-      return sum + (Number(s.estimatedHours) || 0);
-    }, 0);
+    const doneTasks = subtasks.filter(s => s.status === "Done");
+    const blockedTasks = subtasks.filter(s => s.status === "Blocked");
+    const overdueTasks = subtasks.filter(s => s.status === "Overdue");
 
-    const progress = total ? Math.round((done / total) * 100) : 0;
+    const totalHours = subtasks.reduce(
+      (sum, s) => sum + (Number(s.estimatedHours) || 0),
+      0
+    );
 
-    // 7. RESPONSE
+    const completedHours = doneTasks.reduce(
+      (sum, s) => sum + (Number(s.estimatedHours) || 0),
+      0
+    );
+
+    // ✅ VELOCITY (ONLY DONE WORK)
+    const velocity = completedHours;
+
+    // ✅ PROGRESS %
+    const progress = total
+      ? Math.round(
+          subtasks.reduce((sum, s) => sum + s.percent_complete, 0) / total
+        )
+      : 0;
+
+    // ✅ CAPACITY
+    const totalMembers = memberIds.length || 1;
+    const maxCapacity = totalMembers * 40;
+    const capacity = Math.min(
+      Math.round((totalHours / maxCapacity) * 100),
+      100
+    );
+
     return res.status(200).json({
       success: true,
       data: {
@@ -130,21 +162,22 @@ exports.getTeamPerformance = async (req, res) => {
         sprintInfo: {
           name: sprint?.name || "No Active Sprint",
           goal: sprint?.goal || "",
-          start_date: sprint?.start_date,
-          end_date: sprint?.end_date,
         },
+
+        sprintPoints: velocity,
+        totalTeamMembers: totalMembers,
 
         metrics: {
           total,
-          done,
-          remaining,
-          blocked,
-          progress,
+          done: doneTasks.length,
+          blocked: blockedTasks.length,
+          overdue: overdueTasks.length,
           totalHours,
+          progress,
+          capacity,
         },
       },
     });
-
   } catch (error) {
     console.error("Team Performance Error:", error);
     return res.status(500).json({

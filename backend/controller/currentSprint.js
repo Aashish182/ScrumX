@@ -116,6 +116,104 @@
 // };
 
 // module.exports = getCurrentSprintController;
+
+
+// const SubTask = require("../models/subtasksModel");
+// const Task = require("../models/tasksModel");
+// const Story = require("../models/userstoriesModel");
+// const Sprint = require("../models/sprintModel");
+
+// const getCurrentSprintController = async (req, res) => {
+//     try {
+//         const userId = req.userId || req.query.userId;
+
+//         // 1. Get subtasks
+//         const subtasks = await SubTask.find({ assignee_id: userId });
+
+//         if (!subtasks.length) {
+//             return res.status(200).json({ success: true, data: null });
+//         }
+
+//         // 2. Get related tasks (safe mapping)
+//         const taskIds = [...new Set(subtasks.map(s => s.task_id).filter(Boolean))];
+
+//         const tasks = await Task.find({ _id: { $in: taskIds } });
+
+//         if (!tasks.length) {
+//             return res.status(200).json({ success: true, data: null });
+//         }
+
+//         // 3. Get stories
+//         const storyIds = [...new Set(tasks.map(t => t.story_id).filter(Boolean))];
+
+//         const stories = await Story.find({ _id: { $in: storyIds } });
+
+//         if (!stories.length) {
+//             return res.status(200).json({ success: true, data: null });
+//         }
+
+//         // 4. Get sprint
+//         const sprintId = stories[0]?.sprint_id;
+//         const sprint = await Sprint.findById(sprintId);
+
+//         if (!sprint) {
+//             return res.status(200).json({ success: true, data: null });
+//         }
+
+//         // 5. Metrics calculation
+//         const total = subtasks.length;
+//         const done = subtasks.filter(s => s.status === "Done").length;
+//         const remaining = total - done;
+
+//         const totalHours = subtasks.reduce(
+//             (sum, s) => sum + Number(s.estimated_hours || 0),
+//             0
+//         );
+
+//         const completedHours = subtasks
+//             .filter(s => s.status === "Done")
+//             .reduce((sum, s) => sum + Number(s.estimated_hours || 0), 0);
+
+//         const progress = total ? Math.round((done / total) * 100) : 0;
+
+//         // 6. Active subtasks sorted (important for UI)
+//         const activeSubtasks = subtasks
+//             .filter(s => s.status !== "Done")
+//             .sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+
+//         return res.status(200).json({
+//             success: true,
+//             data: {
+//                 sprint: {
+//                     _id: sprint._id,
+//                     name: sprint.name,
+//                     goal: sprint.goal,
+//                     start_date: sprint.start_date,
+//                     end_date: sprint.end_date
+//                 },
+//                 subtasks: activeSubtasks,
+//                 metrics: {
+//                     total,
+//                     done,
+//                     remaining,
+//                     progress,
+//                     totalHours,
+//                     completedHours
+//                 }
+//             }
+//         });
+
+//     } catch (err) {
+//         console.error(err);
+//         return res.status(500).json({
+//             success: false,
+//             message: "Server Error"
+//         });
+//     }
+// };
+
+// module.exports = getCurrentSprintController;
+
 const SubTask = require("../models/subtasksModel");
 const Task = require("../models/tasksModel");
 const Story = require("../models/userstoriesModel");
@@ -125,42 +223,60 @@ const getCurrentSprintController = async (req, res) => {
     try {
         const userId = req.userId || req.query.userId;
 
-        // 1. Get subtasks
+        // =========================
+        // 1. GET ALL SUBTASKS
+        // =========================
         const subtasks = await SubTask.find({ assignee_id: userId });
 
         if (!subtasks.length) {
             return res.status(200).json({ success: true, data: null });
         }
 
-        // 2. Get related tasks (safe mapping)
+        // =========================
+        // 2. GET TASKS
+        // =========================
         const taskIds = [...new Set(subtasks.map(s => s.task_id).filter(Boolean))];
-
         const tasks = await Task.find({ _id: { $in: taskIds } });
 
         if (!tasks.length) {
             return res.status(200).json({ success: true, data: null });
         }
 
-        // 3. Get stories
+        // =========================
+        // 3. GET STORIES
+        // =========================
         const storyIds = [...new Set(tasks.map(t => t.story_id).filter(Boolean))];
-
         const stories = await Story.find({ _id: { $in: storyIds } });
 
         if (!stories.length) {
             return res.status(200).json({ success: true, data: null });
         }
 
-        // 4. Get sprint
-        const sprintId = stories[0]?.sprint_id;
-        const sprint = await Sprint.findById(sprintId);
+        // =========================
+        // 4. FIND ACTIVE SPRINT (BETTER LOGIC)
+        // =========================
+        let sprint = null;
+
+        for (const story of stories) {
+            const foundSprint = await Sprint.findById(story.sprint_id);
+            if (foundSprint && foundSprint.status === "Active") {
+                sprint = foundSprint;
+                break;
+            }
+        }
 
         if (!sprint) {
             return res.status(200).json({ success: true, data: null });
         }
 
-        // 5. Metrics calculation
+        // =========================
+        // 5. METRICS
+        // =========================
         const total = subtasks.length;
-        const done = subtasks.filter(s => s.status === "Done").length;
+
+        const doneTasks = subtasks.filter(s => s.status === "Done");
+        const done = doneTasks.length;
+
         const remaining = total - done;
 
         const totalHours = subtasks.reduce(
@@ -168,17 +284,31 @@ const getCurrentSprintController = async (req, res) => {
             0
         );
 
-        const completedHours = subtasks
-            .filter(s => s.status === "Done")
-            .reduce((sum, s) => sum + Number(s.estimated_hours || 0), 0);
+        const completedHours = doneTasks.reduce(
+            (sum, s) => sum + Number(s.estimated_hours || 0),
+            0
+        );
 
         const progress = total ? Math.round((done / total) * 100) : 0;
 
-        // 6. Active subtasks sorted (important for UI)
-        const activeSubtasks = subtasks
-            .filter(s => s.status !== "Done")
-            .sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+        // =========================
+        // 6. FORMAT SUBTASKS FOR UI
+        // =========================
+        const formattedSubtasks = subtasks
+            .filter(s => s.status !== "Done") // only active
+            .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
+            .map(s => ({
+                _id: s._id,
+                title: s.title || "Untitled Task",
+                status: s.status,
+                estimated_hours: Number(s.estimated_hours || 0),
+                percent_complete: Number(s.percent_complete || 0), // 🔥 important for progress bar
+                created_at: s.created_at
+            }));
 
+        // =========================
+        // 7. RESPONSE
+        // =========================
         return res.status(200).json({
             success: true,
             data: {
@@ -189,7 +319,9 @@ const getCurrentSprintController = async (req, res) => {
                     start_date: sprint.start_date,
                     end_date: sprint.end_date
                 },
-                subtasks: activeSubtasks,
+
+                subtasks: formattedSubtasks, // ✅ FIXED
+
                 metrics: {
                     total,
                     done,
@@ -202,7 +334,7 @@ const getCurrentSprintController = async (req, res) => {
         });
 
     } catch (err) {
-        console.error(err);
+        console.error("Current Sprint Error:", err);
         return res.status(500).json({
             success: false,
             message: "Server Error"

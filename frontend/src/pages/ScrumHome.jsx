@@ -1086,34 +1086,60 @@ const ScrumMasterDashboard = () => {
   const fetchAndCalculateData = async (teamId) => {
     try {
       setLoading(true);
-      const res = await axios.get(`${SummaryApi.teamPerformance.url}/${teamId}`, { withCredentials: true });
-      
+
+      const res = await axios.get(
+        `${SummaryApi.teamPerformance.url}/${teamId}`,
+        { withCredentials: true }
+      );
+
       if (res.data.success) {
-        const { subtasks, sprintPoints, totalTeamMembers, sprintInfo } = res.data.data;
+        const {
+          subtasks = [],
+          sprintPoints = 0,
+          totalTeamMembers = 1,
+          sprintInfo = {},
+        } = res.data.data;
 
         const total = subtasks.length;
-        const avgProgress = total > 0 
-          ? Math.round(subtasks.reduce((acc, s) => acc + (s.percent_complete || 0), 0) / total) 
-          : 0;
 
-        const assignedHours = subtasks.reduce((sum, s) => sum + (Number(s.estimatedHours) || 0), 0);
-        const maxCapacity = (totalTeamMembers || 5) * 40; // Assuming 40h per week per member
-        const capacityLoad = Math.round((assignedHours / maxCapacity) * 100);
+        // ✅ AVG PROGRESS
+        const avgProgress =
+          total > 0
+            ? Math.round(
+                subtasks.reduce(
+                  (acc, s) => acc + (s.percent_complete || 0),
+                  0
+                ) / total
+              )
+            : 0;
+
+        // ✅ TOTAL WORKLOAD
+        const totalHours = subtasks.reduce(
+          (sum, s) => sum + (Number(s.estimatedHours) || 0),
+          0
+        );
+
+        // ✅ CAPACITY
+        const maxCapacity = (totalTeamMembers || 5) * 40;
+        const capacityLoad = Math.round((totalHours / maxCapacity) * 100);
+
+        // ✅ BLOCKERS
+        const blockers = subtasks.filter(s => s.status === "Blocked").length;
 
         setDashboardData({
           subtasks,
-          sprintInfo: sprintInfo || { name: "Sprint Active", goal: "Complete team tasks" },
+          sprintInfo: sprintInfo || {},
           metrics: {
-            velocity: sprintPoints || 0,
+            velocity: Number(sprintPoints) || 0,   // 🔥 FIXED
             dailyProgress: avgProgress,
             capacity: Math.min(capacityLoad, 100),
-            totalHours: assignedHours,
-            blockerCount: subtasks.filter(s => s.status === "Blocked").length
-          }
+            totalHours: totalHours,
+            blockerCount: blockers,
+          },
         });
       }
     } catch (err) {
-      console.error("Fetch error:", err);
+      console.error(err);
     } finally {
       setLoading(false);
     }
